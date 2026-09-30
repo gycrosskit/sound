@@ -42,10 +42,10 @@ repositories {
     maven("https://mirrors.tencent.com/nexus/repository/maven-public/")
 }
 commonMain.dependencies {
-    implementation("com.github.gycrosskit.sound:sound-core:0.1.0")
+    implementation("com.github.gycrosskit.sound:sound-core:0.1.1")
 }
 ohosArm64Main.dependencies {
-    implementation("com.github.gycrosskit.sound:sound-kuikly:0.1.0")
+    implementation("com.github.gycrosskit.sound:sound-kuikly:0.1.1")
 }
 ```
 
@@ -73,7 +73,7 @@ sound.play()
 sound.release()
 ```
 
-宿主将文件加入对应 Bundle。Swift 直接调用时，将 `sound-core` 作为 `api` 依赖，并在宿主的 iOS `binaries.framework` 中 `export("com.github.gycrosskit.sound:sound-core:0.1.0")`；状态流观察可留在 Kotlin 层转给 Swift。不需要额外 Swift Package 或宿主 Swift 播放桥。组件不修改 AVAudioSession，全局音频会话、静音键、后台播放和与其他音频的交互由宿主决定。所有入口在主线程调用。本地文件缺失或不能播放时静默结束该次播放。
+宿主将文件加入对应 Bundle。Swift 直接调用时，将 `sound-core` 作为 `api` 依赖，并在宿主的 iOS `binaries.framework` 中 `export("com.github.gycrosskit.sound:sound-core:0.1.1")`；状态流观察可留在 Kotlin 层转给 Swift。不需要额外 Swift Package 或宿主 Swift 播放桥。组件不修改 AVAudioSession，全局音频会话、静音键、后台播放和与其他音频的交互由宿主决定。所有入口在主线程调用。本地文件缺失或不能播放时静默结束该次播放。
 
 ## HarmonyOS 原生与 Kuikly
 

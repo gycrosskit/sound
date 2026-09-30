@@ -88,3 +88,9 @@ Android/OHOS 的 prepared 只是原生预缓冲，大小由宿主 CDN 控制；i
 - 首次独立 consumer 缺 sdk.dir，补忽略的本机配置后通过；资源拥挤的排队构建由本任务取消并改为串行验证。
 - 产物位于 build/release，SHA256SUMS 与 release-checksums.txt 可核验。远程发布与远程消费尚待完成。
 - 真机音效、API22兼容、CDN和业务宿主接入仍未验收；不新增奖励触发业务。
+
+## 2026-09-30 远程发布修正
+
+Maven 候选改为 0.1.1，组件逻辑不变。JitPack Linux 实际错误为将 macOS AppleDouble `._*.module` 读取为 JSON。`release-pack.py` 用 Python tarfile 打包当前版本，排除 AppleDouble；归档逐项 JSON 与文件引用校验通过。旧 Release/标签不覆盖。重新发布全部声明平台产物成功，远程消费继续验证。
+
+HAR 的 OHPM 版本保持原版本；Registry 要求的作者 URL、仓库 URL 与安装命令已补齐（如适用）。提交已被 Registry 接受，审核中；尚不能称为上架或远程安装成功。

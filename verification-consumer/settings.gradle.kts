@@ -16,7 +16,7 @@ dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         maven {
-            url = uri(providers.gradleProperty("soundMavenRepo").orElse("../build/maven").get())
+            url = uri(providers.gradleProperty("soundMavenRepo").orElse("https://jitpack.io").get())
             content { includeGroup("com.github.gycrosskit.sound") }
         }
         maven { url = uri("https://maven.eazytec-cloud.com/nexus/repository/maven-public/"); content { includeVersionByRegex(".*", ".*", ".*-1\\.0\\.0"); includeGroup("io.ktor") } }

@@ -5,5 +5,5 @@ bash gradlew :sound-core:compileDebugKotlinAndroid :sound-core:testDebugUnitTest
 node verification/ohos-behavior.cjs
 bash gradlew publishAllPublicationsToStagingRepository --max-workers=1
 python3 verification/check-maven.py
-bash gradlew -p verification-consumer compileDebugKotlinAndroid compileKotlinIosArm64 compileKotlinIosX64 linkDebugFrameworkIosSimulatorArm64 compileKotlinOhosArm64 --max-workers=1
+bash gradlew -p verification-consumer -PsoundMavenRepo="$PWD/build/maven" compileDebugKotlinAndroid compileKotlinIosArm64 compileKotlinIosX64 linkDebugFrameworkIosSimulatorArm64 compileKotlinOhosArm64 --max-workers=1
 xcrun swiftc -typecheck -target arm64-apple-ios14.0-simulator -sdk "$(xcrun --sdk iphonesimulator --show-sdk-path)" -F verification-consumer/build/bin/iosSimulatorArm64/debugFramework verification/SwiftConsumer.swift

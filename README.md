@@ -29,11 +29,11 @@ interface SoundPlayer {
 
 ## Gradle 接入和版本
 
-当前只有本地源码与本地 Maven 验证产物，尚未创建远程仓库、Git 标签或发布版本。以下坐标是本地验证及未来 JitPack 配置使用的坐标，不能据此认定远程可下载：
+Maven 坐标如下；使用 JitPack。远程可用性以 [VERIFICATION.md](VERIFICATION.md) 的发布和独立消费结果为准：
 
 ```kotlin
 repositories {
-    maven("/absolute/path/to/sound/build/maven") {
+    maven("https://jitpack.io") {
         content { includeGroup("com.github.gycrosskit.sound") }
     }
     maven("https://maven.eazytec-cloud.com/nexus/repository/maven-public/")
@@ -79,10 +79,10 @@ sound.release()
 
 独立 `verification-har` 已通过文件 HAR 安装后导入 `SoundPlayer` / `SoundState` / Kuikly `SoundModule`，并完成 `assembleHar`；消费模块只声明 `@gycrosskit/sound`，Kuikly render 由其传递依赖安装。可执行 `bash scripts/verify-har.sh` 复现（须先构建 SoundNative.har）。本地验证消费者的 file 依赖会触发打包警告，该消费者产物仅用于本地检查。
 
-当前可从本地 HAR 安装，尚未发布 ohpm：
+OHPM 安装坐标（发布状态以查询和独立安装验证为准）：
 
 ```shell
-ohpm install /absolute/path/to/sound/ohos/sound-native/build/default/outputs/default/SoundNative.har
+ohpm install @gycrosskit/sound@0.1.0
 ```
 
 ```typescript
@@ -125,7 +125,7 @@ DEVECO_SDK_HOME=/Applications/DevEco-Studio.app/Contents/sdk \
 
 运行 HAR 构建前先 `ohpm install --all`；将 DevEco 的 `tools/node/bin` 与 `tools/ohpm/bin` 加入 PATH。`verification/ohos-behavior.cjs` 使用 SDK TypeScript 转译器运行真实 ArkTS 源码与可控系统播放器替身，支持 `SOUND_TYPESCRIPT` 覆盖转译器路径。这是行为测试，不能代替真机音频播放验收。
 
-Maven 全变体输出到 `build/maven`，独立消费工程通过 Maven 坐标解析 Android/iOS/OHOS 产物。`scripts/verify.sh` 使用 `--max-workers=1` 限制编译资源。实际验证结果与命令见 [VERIFICATION.md](VERIFICATION.md)。
+Maven 全变体输出到 `build/maven`，独立消费工程默认使用 JitPack；本地验证显式传 `-PsoundMavenRepo="$PWD/build/maven"`，通过 Maven 坐标解析 Android/iOS/OHOS 产物。`scripts/verify.sh` 使用 `--max-workers=1` 限制编译资源。实际验证结果与命令见 [VERIFICATION.md](VERIFICATION.md)。
 
 本地归档准备命令（仅生成本地文件）：
 

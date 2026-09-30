@@ -75,3 +75,16 @@ DEVECO_SDK_HOME=/Applications/DevEco-Studio.app/Contents/sdk \
 - 远程 GitHub/JitPack/ohpm 发布与远程消费，ohpm prepublish。`0.1.0` 仅为本地开发版本；空 `release-checksums.txt` 没有发布校验值。
 
 Android/OHOS 的 prepared 只是原生预缓冲，大小由宿主 CDN 控制；iOS 完整内存下载最大 2 MiB。三端均不承诺持久离线缓存。资源文件与业务触发仍由宿主提供，原应用未接入该组件。
+
+
+## 本次远程发布候选验证
+
+工作目录为本聊天独占 Worktree `codex/sound-remote-release`，原始源码初始提交 `44bd582` 已经用户授权。没有修改音频逻辑；候选为 0.1.0。
+
+- 重新执行 Android 4 个单测、iOS Simulator 10 个单测、Android/iOS/OHOS 编译、OHOS 实际 ArkTS mock 行为测试和全 Maven staging，全部通过。
+- 8 个 Module Metadata / 20 个产物文件引用存在、大小/SHA256 检查通过。
+- 独立正式 group staging consumer：Android、iOS arm64/x64、OHOS 编译和 iOS Simulator Framework 链接通过（串行 worker1/1GB/no-daemon）。消费者默认 JitPack，本地使用 soundMavenRepo 显式属性。
+- HAR 最终 assembleHar 与独立打包 HAR 消费成功，ohpm prepublish 成功。
+- 首次独立 consumer 缺 sdk.dir，补忽略的本机配置后通过；资源拥挤的排队构建由本任务取消并改为串行验证。
+- 产物位于 build/release，SHA256SUMS 与 release-checksums.txt 可核验。远程发布与远程消费尚待完成。
+- 真机音效、API22兼容、CDN和业务宿主接入仍未验收；不新增奖励触发业务。

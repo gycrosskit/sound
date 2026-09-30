@@ -1,0 +1,7 @@
+{
+  "module": {
+    "name": "SoundConsumerNative",
+    "type": "har",
+    "deviceTypes": ["default", "tablet"]
+  }
+}

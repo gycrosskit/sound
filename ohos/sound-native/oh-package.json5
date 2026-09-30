@@ -1,0 +1,13 @@
+{
+  "name": "@gycrosskit/sound",
+  "version": "0.1.0",
+  "description": "HarmonyOS 短音效预加载与本地资源回退",
+  "main": "Index.ets",
+  "author": {
+    "name": "gycrosskit",
+    "url": "https://github.com/gycrosskit/sound"
+  },
+  "repository": "https://github.com/gycrosskit/sound",
+  "license": "Apache-2.0",
+  "dependencies": { "@kuikly-open/render": "2.28.0" }
+}

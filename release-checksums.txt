@@ -1,0 +1,2 @@
+# 发布前填入不可变 Git 标签及对应 sound-maven.tar.gz 的 SHA-256；当前没有远程版本。
+# tag sha256

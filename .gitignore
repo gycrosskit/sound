@@ -1,0 +1,11 @@
+.gradle/
+.kotlin/
+**/build/
+local.properties
+**/oh_modules/
+**/.hvigor/
+**/oh-package-lock.json5
+.DS_Store
+**/__pycache__/
+*.pyc
+**/BuildProfile.ets

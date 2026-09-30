@@ -2,6 +2,8 @@
 
 Android、iOS 和 HarmonyOS 的单个短音效播放器：HTTPS 预加载、从头重播、宿主本地资源回退、准备状态和生命周期释放。音效开关、业务事件去重、奖励触发及具体音频文件均由宿主负责。组件没有内置 `reward_coin.wav`、业务接口或账号。
 
+Maven `0.1.1` 已发布：[GitHub Release](https://github.com/gycrosskit/sound/releases/tag/0.1.1)，JitPack 状态 `ok`，独立消费的Android、iOS arm64/x64 编译、iOS Simulator Framework 链接、OHOS 编译通过。 HAR `0.1.0` 已提交 OHPM 审核，尚未上架；GitHub Release HAR 已远程下载、SHA-256 校验、安装到独立工程并 assembleHar 成功。OHPM 不支持此 HAR URL 直接依赖，验收使用下载缓存的 file 依赖，不计为 Registry 安装验收。
+
 ## 平台和 API
 
 | 模块 | 平台 / 能力 |
@@ -136,4 +138,4 @@ shasum -a 256 build/sound-maven.tar.gz
 
 `jitpack-install.sh` 和 `jitpack-metadata.py` 从 GY CrossKit `.github/templates` 同步；后者只在 JitPack 安装归档后移除已知会被重写到缺失文件的 Sources/Metadata 变体，平台 API/runtime 变体保留。
 
-`jitpack.yml` / `jitpack-install.sh` 保留 macOS 预构建 Maven 归档安装入口。正式发布前，在匹配标签下发布 `sound-maven.tar.gz` 并把不可变标签与归档 SHA-256 写入 `release-checksums.txt`；没有校验值时安装脚本直接失败。还需核验远程 JitPack metadata/变体、干净远程 Maven 消费、ohpm prepublish 与上架后安装。当前没有远程可用性承诺。
+`jitpack.yml` / `jitpack-install.sh` 保留 macOS 预构建 Maven 归档安装入口。正式发布前，在匹配标签下发布 `sound-maven.tar.gz` 并把不可变标签与归档 SHA-256 写入 `release-checksums.txt`；没有校验值时安装脚本直接失败。还需核验远程 JitPack metadata/变体、干净远程 Maven 消费、ohpm prepublish 与上架后安装。远程 Maven 与 GitHub Release HAR 消费通过，OHPM 审核后仍需 Registry 安装验收。

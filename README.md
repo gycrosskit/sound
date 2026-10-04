@@ -4,6 +4,76 @@ Android、iOS 和 HarmonyOS 的单个短音效播放器：HTTPS 预加载、从�
 
 Maven `0.1.1` 已发布：[GitHub Release](https://github.com/gycrosskit/sound/releases/tag/0.1.1)，JitPack 状态 `ok`，独立消费的Android、iOS arm64/x64 编译、iOS Simulator Framework 链接、OHOS 编译通过。 HAR `0.1.0` 已通过 OHPM 审核并上架，正式 Registry 精确版本安装和独立 assembleHar 已通过；GitHub Release HAR 已远程下载、SHA-256 校验、安装到独立工程并 assembleHar 成功。OHPM 不支持此 HAR URL 直接依赖，验收使用下载缓存的 file 依赖，另已使用正式 Registry 版本重新验收安装与编译。
 
+## 架构与调用流程
+
+宿主拥有一个短音效实例，提供本地音频、远端 URL 和播放触发；组件只管理准备、重播与释放。Kotlin 共享契约和 URL / 准备状态规则，真正播放落到各平台原生播放器。
+
+```mermaid
+flowchart TB
+    H["宿主<br/>音频 / URL / play / release"] --> P["SoundPlayer<br/>SoundState"]
+    P --> A["AndroidSoundPlayer<br/>MediaPlayer"]
+    P --> I["IosSoundPlayer<br/>Darwin / AVAudioPlayer"]
+    P --> K["SoundModule<br/>Kuikly Kotlin"]
+    K --> R["SoundModule<br/>ArkTS Renderer"]
+    R --> O["ArkTS SoundPlayer<br/>AVPlayer"]
+    A -.-> H
+    I -.-> H
+    K -.-> H
+```
+
+`prepare()` 立即返回，准备结果异步更新；准备成功不自动播放。Android/OHOS 是网络预缓冲，iOS 完整下载到内存后解码（最大 2 MiB），不能统一当作离线缓存。
+
+```mermaid
+flowchart TD
+    C["创建实例<br/>宿主提供本地资源"] --> U["prepare(URL)<br/>校验 / 去重 / 重试"]
+    U --> N["空 URL：LOCAL_ONLY<br/>非法：REMOTE_FAILED"]
+    U --> D["有效新 URL：取消旧准备<br/>PREPARING"]
+    D --> R["当前请求准备成功<br/>REMOTE_READY"]
+    D --> F["失败或 5 秒期限<br/>REMOTE_FAILED"]
+    T["宿主显式 play"] --> Q{"远端已 READY？"}
+    Q -->|是| V["从头播放远端<br/>实际失败回退本地"]
+    Q -->|否| L["从头播放<br/>宿主本地资源"]
+    E["退出 / 原生 onDestroy"] --> X["release：停止 / 取消任务<br/>撤销 callback / 计时器"]
+    X --> Z["RELEASED：prepare / play 无效<br/>重用须新建实例"]
+```
+
+Kotlin `release()` 同步关闭本实例资格。OHOS 原生 `release()` 立即发布 RELEASED，并返回等待本地 AVPlayer 与 rawfile 描述符串行释放的 Promise；远端异步释放已经发起，不属于该 Promise 的完成保证。Android 按播放器对象、iOS/OHOS 按 generation 拒绝替换或释放前的迟回调；Kuikly Kotlin `release()` 移除常驻 callback 并异步通知原生。
+
+```mermaid
+classDiagram
+    class SoundPlayer {
+        <<interface>>
+        +state StateFlow
+        +prepare(remoteUrl)
+        +play()
+        +release()
+    }
+    class AndroidSoundPlayer
+    class IosSoundPlayer
+    class SoundModule {
+        +moduleName() String
+    }
+    class SoundState {
+        +phase SoundPhase
+        +remoteUrl String
+    }
+    class SoundPhase {
+        <<enumeration>>
+        LOCAL_ONLY
+        PREPARING
+        REMOTE_READY
+        REMOTE_FAILED
+        RELEASED
+    }
+    SoundPlayer <|.. AndroidSoundPlayer
+    SoundPlayer <|.. IosSoundPlayer
+    SoundPlayer <|.. SoundModule
+    SoundPlayer --> SoundState : 发布准备与生命周期状态
+    SoundState --> SoundPhase
+```
+
+源码入口：[共享契约与 URL 规则](sound-core/src/commonMain/kotlin/io/github/gycrosskit/sound/SoundPlayer.kt)、[Android 播放器](sound-core/src/androidMain/kotlin/io/github/gycrosskit/sound/AndroidSoundPlayer.kt)、[iOS 下载与 generation](sound-core/src/iosMain/kotlin/io/github/gycrosskit/sound/IosSoundPlayer.kt)、[Kuikly Kotlin callback](sound-kuikly/src/commonMain/kotlin/io/github/gycrosskit/sound/kuikly/SoundModule.kt)、[OHOS Renderer](ohos/sound-native/src/main/ets/SoundModule.ets)、[OHOS 播放与串行释放](ohos/sound-native/src/main/ets/SoundPlayer.ets)。SoundState 不表示正在播放或本地资源可用；缺失或不可解码的本地资源会结束该次播放。
+
 ## 平台和 API
 
 | 模块 | 平台 / 能力 |

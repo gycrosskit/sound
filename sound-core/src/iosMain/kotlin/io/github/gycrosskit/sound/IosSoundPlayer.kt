@@ -26,10 +26,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import platform.AVFAudio.AVAudioPlayer
 import platform.Foundation.NSBundle
+import platform.Foundation.NSThread
+import kotlin.coroutines.EmptyCoroutineContext
 
 /** 将远端短音效预加载到进程内播放器；请求或解码失败时继续播放宿主 Bundle 音效。
  *
- * 主线程创建和调用；release 同时关闭网络请求和播放器。
+ * prepare/play/release 自动切回 Main；后台 release 以 RELEASED 状态确认关闭已执行。
  * @param fallbackResourceName 宿主 Bundle 的无扩展名音效文件名。
  * @param fallbackResourceExtension 音效扩展名；默认 Bundle 为 mainBundle。
  */
@@ -56,11 +58,11 @@ class IosSoundPlayer(
     private var localPlayer: AVAudioPlayer? = null
 
     @OptIn(BetaInteropApi::class, ExperimentalForeignApi::class)
-    override fun prepare(remoteUrl: String?) {
-        val nextState = mutableState.value.nextPreparationState(remoteUrl) ?: return
+    override fun prepare(remoteUrl: String?) = onMain {
+        val nextState = mutableState.value.nextPreparationState(remoteUrl) ?: return@onMain
         releaseRemote()
         mutableState.value = nextState
-        if (nextState.phase != SoundPhase.PREPARING) return
+        if (nextState.phase != SoundPhase.PREPARING) return@onMain
         val generation = requestGeneration
         val value = nextState.remoteUrl
         preloadJob = scope.launch {
@@ -92,8 +94,8 @@ class IosSoundPlayer(
     }
 
     @OptIn(BetaInteropApi::class, ExperimentalForeignApi::class)
-    override fun play() {
-        if (mutableState.value.phase == SoundPhase.RELEASED) return
+    override fun play() = onMain {
+        if (mutableState.value.phase == SoundPhase.RELEASED) return@onMain
         val remote = remotePlayer
         if (mutableState.value.phase == SoundPhase.REMOTE_READY && remote != null) {
             localPlayer?.stop()
@@ -138,14 +140,19 @@ class IosSoundPlayer(
         remotePlayer = null
     }
 
-    override fun release() {
-        if (mutableState.value.phase == SoundPhase.RELEASED) return
+    override fun release() = onMain {
+        if (mutableState.value.phase == SoundPhase.RELEASED) return@onMain
         releaseRemote()
         localPlayer?.stop()
         localPlayer = null
-        mutableState.value = SoundState(SoundPhase.RELEASED)
         client.close()
         scope.cancel()
+        mutableState.value = SoundState(SoundPhase.RELEASED)
+    }
+
+    // 入口与预载共用 Main；不能用预载 scope 排队，因为 release 会取消它。
+    private inline fun onMain(crossinline action: () -> Unit) {
+        if (NSThread.isMainThread) action() else Dispatchers.Main.dispatch(EmptyCoroutineContext) { action() }
     }
 
     private companion object {

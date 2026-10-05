@@ -34,6 +34,19 @@ vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.Mo
   Promise, Error,
 });
 const { SoundPlayer } = moduleExport;
+const rendererExport = {};
+const rendererSource = fs.readFileSync(path.join(__dirname, '../ohos/sound-native/src/main/ets/SoundModule.ets'), 'utf8');
+vm.runInNewContext(ts.transpileModule(rendererSource, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText, {
+  exports: rendererExport,
+  require(name) {
+    if (name === './SoundPlayer') return moduleExport;
+    if (name === '@kuikly-open/render') return { KuiklyRenderBaseModule: class {
+      onDestroy() { this.baseDestroyed = true; }
+    } };
+    throw new Error(`Unexpected renderer import: ${name}`);
+  },
+});
+const { SoundModule } = rendererExport;
 const settle = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
 const nextPlayer = async (player = new Player()) => { assert.ok(pending.length); pending.shift()(player); await settle(); return player; };
 (async () => {
@@ -111,5 +124,33 @@ const nextPlayer = async (player = new Player()) => { assert.ok(pending.length);
   assert.equal(opened.length, openedBefore);
   assert.equal(creating.getState().phase, 'RELEASED');
   assert.equal(pending.length, 0);
-  console.log('OHOS behavior: URL admission, replacement, replay, fallback, timeout, late callback and terminal release passed');
+  // 执行生产 Renderer，销毁与桥 release 都必须屏蔽待创建播放器和旧状态回调。
+  const module = new SoundModule();
+  module.controller = { getUIAbilityContext: () => ({ resourceManager: resources }) };
+  const callbacks = [];
+  module.call('prepare', '{', value => callbacks.push(value.status));
+  assert.deepEqual(callbacks, ['failed']);
+  module.call('prepare', JSON.stringify({ url: 'https://example.test/module.wav', rawfile: 'module.wav' }), value => callbacks.push(value.status));
+  const modulePlayer = await nextPlayer();
+  assert.deepEqual(callbacks, ['failed', 'ready']);
+  const staleState = modulePlayer.handlers.get('stateChange');
+  module.onDestroy(); await settle();
+  staleState('prepared');
+  module.call('play', '{}', value => callbacks.push(value.status));
+  assert.equal(modulePlayer.released, true);
+  assert.equal(module.baseDestroyed, true);
+  assert.deepEqual(callbacks, ['failed', 'ready']);
+  assert.equal(timers.size, 0);
+  assert.equal(pending.length, 0);
+  const closingModule = new SoundModule();
+  closingModule.controller = module.controller;
+  closingModule.call('prepare', JSON.stringify({ url: 'https://example.test/closing.wav', rawfile: 'closing.wav' }), value => callbacks.push(value.status));
+  closingModule.call('release', null, null);
+  assert.equal((await nextPlayer()).released, true);
+  closingModule.call('prepare', JSON.stringify({ url: 'https://example.test/reopened.wav', rawfile: 'closing.wav' }), value => callbacks.push(value.status));
+  closingModule.onDestroy(); await settle();
+  assert.deepEqual(callbacks, ['failed', 'ready']);
+  assert.equal(timers.size, 0);
+  assert.equal(pending.length, 0);
+  console.log('OHOS behavior: Player URL, replacement, replay, fallback, timeout, terminal release; Renderer destroy, pending create and stale callbacks passed');
 })().catch(error => { console.error(error); process.exitCode = 1; });

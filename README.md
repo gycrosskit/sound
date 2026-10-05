@@ -2,7 +2,9 @@
 
 Android、iOS 和 HarmonyOS 的单个短音效播放器，支持 HTTPS 预加载、从头重播、宿主本地资源回退、准备状态和生命周期释放。音频文件、开关和业务事件由宿主提供。
 
-Maven `0.1.2` 已发布 [prerelease](https://github.com/gycrosskit/sound/releases/tag/0.1.2)，修复 Android Main 线程入口；HAR 保持 `0.1.0`。Release 归档重下载 SHA 与 JitPack 全制品审计通过；精确合并提交、校验值、渠道限制及独立消费状态见 [0.1.2 远程发布验收](docs/0.1.2远程发布验收.md)。
+本轮 Maven `0.1.3` 候选修复 iOS Main 线程入口，HAR 源码不变并保持 `0.1.0`，远程发布尚待验收。以下安装示例对应候选版本。
+
+历史 Maven `0.1.2` 已发布 [prerelease](https://github.com/gycrosskit/sound/releases/tag/0.1.2)，修复 Android Main 线程入口；HAR 保持 `0.1.0`。Release 归档重下载 SHA 与 JitPack 全制品审计通过；精确合并提交、校验值、渠道限制及独立消费状态见 [0.1.2 远程发布验收](docs/0.1.2远程发布验收.md)。
 
 ## 架构与调用流程
 
@@ -37,7 +39,7 @@ flowchart TD
     X --> Z["RELEASED：prepare / play 无效<br/>重用须新建实例"]
 ```
 
-Android `release()` 在 Main 上同步执行；后台调用排入 Main，观察 `state.phase == RELEASED` 确认关闭已执行，调用返回本身不保证资源已释放。iOS 与 Kuikly Kotlin `release()` 在各自所属线程同步关闭本实例资格。OHOS 原生 `release()` 立即发布 RELEASED，并返回等待本地 AVPlayer 与 rawfile 描述符串行释放的 Promise；远端异步释放已经发起，不属于该 Promise 的完成保证。Android 按播放器对象、iOS/OHOS 按 generation 拒绝替换或释放前的迟回调；Kuikly Kotlin `release()` 移除常驻 callback 并异步通知原生。
+Android/iOS `release()` 在 Main 上同步执行；后台调用排入 Main，观察 `state.phase == RELEASED` 确认关闭已执行，调用返回本身不保证资源已释放。Kuikly Kotlin `release()` 在所属页面线程同步关闭桥资格，不能由 Kotlin 状态推断原生资源已释放。OHOS 原生 `release()` 立即发布 RELEASED，并返回等待本地 AVPlayer 与 rawfile 描述符串行释放的 Promise；远端异步释放已经发起，不属于该 Promise 的完成保证。Android 按播放器对象、iOS/OHOS 按 generation 拒绝替换或释放前的迟回调；Kuikly Kotlin `release()` 移除常驻 callback 并异步通知原生。
 
 ```mermaid
 classDiagram
@@ -114,7 +116,7 @@ dependencyResolutionManagement {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("com.github.gycrosskit.sound:sound-core:0.1.2")
+            implementation("com.github.gycrosskit.sound:sound-core:0.1.3")
         }
     }
 }
@@ -126,7 +128,7 @@ HarmonyOS 原生宿主：
 ohpm install @gycrosskit/sound@0.1.0
 ```
 
-插件仓库、Kuikly 依赖及注册见[接入指南](docs/接入指南.md)。Maven `0.1.2` 与 HAR `0.1.0` 分别版本化。
+插件仓库、Kuikly 依赖及注册见[接入指南](docs/接入指南.md)。Maven `0.1.3` 候选与 HAR `0.1.0` 分别版本化。
 
 ## 快速使用
 
@@ -146,7 +148,7 @@ iOS 使用 `IosSoundPlayer("host_sound", "wav")`，文件放入宿主 Bundle；A
 
 `prepare()` 异步准备远端且不会自动播放。`play()` 从头重播，远端未就绪或播放失败时使用本地资源；本地不可用则静默结束。实例只播放一个短音效，不提供混音或队列。
 
-`state` 只表示 `LOCAL_ONLY / PREPARING / REMOTE_READY / REMOTE_FAILED / RELEASED`，不表示正在播放。Android 入口可由任意线程调用：Main 立即执行，后台排入 Main；SDK 创建、回调、超时、替换与释放共用 Main。iOS 入口要求 Main，Kuikly 使用所属页面线程。后台 `release()` 返回不代表已完成，以 `state.phase == RELEASED` 确认；关闭后排队请求不能复活实例。`release()` 永久关闭且可重复调用，再次使用需新实例；ArkTS 的释放包含异步资源清理。
+`state` 只表示 `LOCAL_ONLY / PREPARING / REMOTE_READY / REMOTE_FAILED / RELEASED`，不表示正在播放。Android/iOS 的 prepare/play/release 可由任意线程调用：Main 立即执行，后台排入 Main；播放器创建、回调、超时、替换与释放共用 Main。Kuikly 使用所属页面线程。后台 `release()` 返回不代表已完成，以 `state.phase == RELEASED` 确认；关闭后排队请求不能复活实例。`release()` 永久关闭且可重复调用，再次使用需新实例；ArkTS 的释放包含异步资源清理。
 
 iOS 远端完整下载上限 2 MiB；Android/OHOS 使用原生网络预缓冲且无库内字节上限，不保证离线播放。宿主限制文件大小、时长及 HTTPS 重定向链，iOS 音频会话由宿主管理。
 

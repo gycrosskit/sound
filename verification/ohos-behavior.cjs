@@ -29,13 +29,13 @@ vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.Mo
     if (name === '@kit.PerformanceAnalysisKit') return { hilog: { warn() {} } };
     throw new Error(`Unexpected runtime import: ${name}`);
   },
-  setTimeout(fn) { const id = ++timerId; timers.set(id, fn); return id; },
+  setTimeout(fn) { const id = ++timerId; timers.set(id, () => { timers.delete(id); fn(); }); return id; },
   clearTimeout(id) { timers.delete(id); },
   Promise, Error,
 });
 const { SoundPlayer } = moduleExport;
 const settle = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
-const nextPlayer = async () => { const player = new Player(); assert.ok(pending.length); pending.shift()(player); await settle(); return player; };
+const nextPlayer = async (player = new Player()) => { assert.ok(pending.length); pending.shift()(player); await settle(); return player; };
 (async () => {
   const opened = [], closed = [], states = [];
   const resources = { getRawFdSync(name) { opened.push(name); return { fd: 10, offset: 0, length: 12 }; }, closeRawFdSync(name) { closed.push(name); } };
@@ -88,5 +88,28 @@ const nextPlayer = async () => { const player = new Player(); assert.ok(pending.
   assert.equal((await nextPlayer()).released, true);
   await timeout.release();
   assert.equal(timers.size, 0);
+  // 本地 prepared 永不回调也要释放播放器与 rawfile；release 等待中的 create 不能泄漏新实例。
+  class UnpreparedPlayer extends Player { async prepare() {} }
+  const stalled = new SoundPlayer(resources, 'stalled.wav');
+  stalled.play(); await settle();
+  const stalledPlayer = await nextPlayer(new UnpreparedPlayer());
+  assert.equal(stalledPlayer.plays, 0);
+  assert.equal(timers.size, 1);
+  [...timers.values()][0](); await settle();
+  assert.equal(stalledPlayer.released, true);
+  assert.equal(closed.at(-1), 'stalled.wav');
+  assert.equal(timers.size, 0);
+  await stalled.release();
+  const creating = new SoundPlayer(resources, 'creating.wav');
+  const openedBefore = opened.length;
+  creating.play(); await settle();
+  const closing = creating.release();
+  const createdAfterRelease = await nextPlayer();
+  await closing;
+  assert.equal(createdAfterRelease.released, true);
+  assert.equal(createdAfterRelease.plays, 0);
+  assert.equal(opened.length, openedBefore);
+  assert.equal(creating.getState().phase, 'RELEASED');
+  assert.equal(pending.length, 0);
   console.log('OHOS behavior: URL admission, replacement, replay, fallback, timeout, late callback and terminal release passed');
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -5,6 +5,7 @@ import { resourceManager } from '@kit.LocalizationKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 
+/** 状态快照：phase 表示准备/释放状态，remoteUrl 默认空串；不证明播放或下载完成。 */
 export interface SoundState { phase: string; remoteUrl: string; }
 
 /** AVPlayer prepared 表示播放器已预缓冲可起播，不代表完整文件已离线缓存。 */
@@ -27,6 +28,7 @@ export class SoundPlayer {
   private readonly fallbackRawFile: string;
   private readonly onState: (state: SoundState) => void;
 
+  /** 页面线程调用；宿主提供非空 rawfile 名称，onState 默认忽略状态，远端准备超时 5000 毫秒。 */
   constructor(resources: resourceManager.ResourceManager, fallbackRawFile: string,
     onState: (state: SoundState) => void = () => {}) {
     this.resources = resources;
@@ -35,6 +37,7 @@ export class SoundPlayer {
     if (fallbackRawFile.trim().length === 0) { throw new Error('A host rawfile is required'); }
   }
 
+  /** 返回独立快照，调用方修改不会改变播放器状态。 */
   getState(): SoundState { return { phase: this.state.phase, remoteUrl: this.state.remoteUrl }; }
 
   private updateState(phase: string, url: string): void {
@@ -42,6 +45,7 @@ export class SoundPlayer {
     this.onState(this.getState());
   }
 
+  /** 只接受无凭据 HTTPS；空值恢复本地音效，失败可重试，同址准备/就绪时不重复创建。 */
   prepare(remoteUrl?: string): void {
     if (this.destroyed) { return; }
     const url = remoteUrl?.trim() ?? '';
@@ -84,6 +88,7 @@ export class SoundPlayer {
     player.url = url;
   }
 
+  /** 从头播放就绪远端，未就绪或远端播放失败时回退 rawfile；本地请求串行释放描述符。 */
   play(): void {
     if (this.destroyed) { return; }
     const player = this.remote;

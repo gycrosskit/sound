@@ -5,6 +5,7 @@ interface SoundParams { url?: string; rawfile?: string; }
 
 /** rawfile 由宿主传入，模块只拥有当前页面的播放器。 */
 export class SoundModule extends KuiklyRenderBaseModule {
+  /** Kuikly 注册名，与 Kotlin 侧常量一致。 */
   static readonly MODULE_NAME: string = 'GycSound';
   private player: SoundPlayer | null = null;
   private callback: KuiklyRenderCallback | null = null;
@@ -12,6 +13,7 @@ export class SoundModule extends KuiklyRenderBaseModule {
 
   syncMode(): boolean { return false; }
 
+  /** 页面线程异步入口；销毁后忽略请求与迟到回调，参数 JSON 属于输入边界。 */
   call(method: string, params: KRAny, callback: KuiklyRenderCallback | null): KRAny {
     if (this.destroyed) { return null; }
     if (method === 'release') {

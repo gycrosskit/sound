@@ -18,17 +18,17 @@ data class SoundState(
     val remoteUrl: String = "",
 )
 
-/** 单个短音效播放器。入口由宿主主线程（Kuikly 为页面线程）串行调用。 */
+/** 单个短音效播放器。Android 自动切回 Main；iOS 在主线程调用，Kuikly Module 在页面线程调用。 */
 interface SoundPlayer {
     val state: StateFlow<SoundState>
 
     /** 空地址恢复内置音效；非空地址由平台播放器异步预缓冲，不阻塞业务页面。 */
     fun prepare(remoteUrl: String?)
 
-    /** 远端已就绪时从头播放，否则立即播放安装包内音效。 */
+    /** 执行时远端已就绪则从头播放，否则播放安装包内音效。 */
     fun play()
 
-    /** 永久关闭实例并取消迟到回调；再次使用须创建新实例。 */
+    /** 永久关闭实例并取消迟到回调；Android 后台调用以 RELEASED 状态确认关闭，重用须新建实例。 */
     fun release()
 }
 

@@ -12,6 +12,7 @@ kotlin {
         }
         iosMain.dependencies { implementation("io.ktor:ktor-client-darwin:3.3.3-1.1.0-04") }
         commonTest.dependencies { implementation(kotlin("test")) }
+        androidUnitTest.dependencies { implementation("org.robolectric:robolectric:4.16.1") }
         iosTest.dependencies {
             implementation("io.ktor:ktor-client-mock:3.3.3-1.1.0-04")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2-1.0.0")

@@ -10,13 +10,76 @@ import io.ktor.utils.io.ByteChannel
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.writeFully
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertNull
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+import platform.Foundation.NSThread
 
 class IosSoundPlayerTest {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun backgroundCommandsWaitForMainAndRemainClosedAfterScopeCancellation() = runTest {
+        assertTrue(NSThread.isMainThread)
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val player = IosSoundPlayer("host_resource", "wav")
+        try {
+            // 只在测试阻塞 Main 等后台提交；避免 runTest 提前消费 Main 队列。
+            runBlocking(Dispatchers.Default) { player.prepare("http://example.test/rejected.wav") }
+            assertEquals(SoundState(), player.state.value)
+            runCurrent()
+            assertEquals(SoundPhase.REMOTE_FAILED, player.state.value.phase)
+            runBlocking(Dispatchers.Default) { player.release() }
+            assertEquals(SoundPhase.REMOTE_FAILED, player.state.value.phase)
+            runCurrent()
+            assertEquals(SoundState(SoundPhase.RELEASED), player.state.value)
+            runBlocking(Dispatchers.Default) {
+                player.prepare(URL)
+                player.play()
+                player.release()
+            }
+            runCurrent()
+            assertEquals(SoundState(SoundPhase.RELEASED), player.state.value)
+        } finally {
+            player.release()
+            Dispatchers.resetMain()
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun queuedPreparationAndReleaseCannotReviveThePlayer() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val player = IosSoundPlayer("host_resource", "wav")
+        try {
+            runBlocking(Dispatchers.Default) {
+                player.prepare(URL)
+                player.play()
+                player.release()
+                player.prepare("https://example.test/after-release.wav")
+                player.play()
+                player.release()
+            }
+            assertEquals(SoundState(), player.state.value)
+            runCurrent()
+            assertEquals(SoundState(SoundPhase.RELEASED), player.state.value)
+            runCurrent()
+            assertEquals(SoundState(SoundPhase.RELEASED), player.state.value)
+        } finally {
+            player.release()
+            Dispatchers.resetMain()
+        }
+    }
+
     @Test
     fun releaseIsTerminalAndIdempotent() {
         val player = IosSoundPlayer("host_resource", "wav")

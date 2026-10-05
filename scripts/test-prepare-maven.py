@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 import unittest
 
 SOURCE = Path(__file__).resolve().parents[1]
-VERSION = "0.1.2"
+VERSION = "0.1.3"
 GROUP = "com.github.gycrosskit.sound"
 PUBLICATIONS = {
     "sound-core": None,

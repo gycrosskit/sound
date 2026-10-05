@@ -23,7 +23,7 @@ data class SoundState(
     val remoteUrl: String = "",
 )
 
-/** 单个短音效播放器。Android 自动切回 Main；iOS 在主线程调用，Kuikly Module 在页面线程调用。 */
+/** 单个短音效播放器。Android/iOS 入口自动切回 Main；Kuikly Module 在所属页面线程调用。 */
 interface SoundPlayer {
     /** 只读当前状态；异步 prepare 的结果通过此流观察。 */
     val state: StateFlow<SoundState>
@@ -34,7 +34,10 @@ interface SoundPlayer {
     /** 执行时远端已就绪则从头播放，否则播放安装包内音效。 */
     fun play()
 
-    /** 永久关闭实例并取消迟到回调；Android 后台调用以 RELEASED 状态确认关闭，重用须新建实例。 */
+    /**
+     * 永久关闭实例并取消迟到回调，重用须新建实例。
+     * Android/iOS 后台调用以 RELEASED 确认关闭已执行；Kuikly 的 RELEASED 只确认桥关闭，原生释放异步执行。
+     */
     fun release()
 }
 

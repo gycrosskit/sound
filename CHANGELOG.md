@@ -1,5 +1,10 @@
 # 更新记录
 
+## 0.1.3（候选，未发布）
+
+- iOS prepare/play/release 自动串行切回 Main；后台 release 以 RELEASED 状态确认执行完成。
+- 调度独立于预载 scope，释放后排队请求不能复活实例；HAR 源码与版本保持 0.1.0。
+
 ## 0.1.0（本地开发，未发布）
 
 - 抽离 Android/iOS/OHOS 的短音效预加载、重播与宿主本地资源回退。

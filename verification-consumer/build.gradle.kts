@@ -8,12 +8,12 @@ kotlin {
     iosX64()
     iosSimulatorArm64 { binaries.framework {
         baseName = "SoundConsumer"
-        export("com.github.gycrosskit.sound:sound-core:0.1.2")
+        export("com.github.gycrosskit.sound:sound-core:0.1.3")
     } }
     ohosArm64()
     sourceSets {
-        commonMain.dependencies { api("com.github.gycrosskit.sound:sound-core:0.1.2") }
-        ohosArm64Main.dependencies { implementation("com.github.gycrosskit.sound:sound-kuikly:0.1.2") }
+        commonMain.dependencies { api("com.github.gycrosskit.sound:sound-core:0.1.3") }
+        ohosArm64Main.dependencies { implementation("com.github.gycrosskit.sound:sound-kuikly:0.1.3") }
     }
 }
 android {

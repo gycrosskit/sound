@@ -2,7 +2,7 @@
 
 Android、iOS 和 HarmonyOS 的单个短音效播放器，支持 HTTPS 预加载、从头重播、宿主本地资源回退、准备状态和生命周期释放。音频文件、开关和业务事件由宿主提供。
 
-Maven 候选 `0.1.2` 修复 Android Main 线程入口；HAR 保持 `0.1.0`。本地完整归档已通过，远程门禁进行中，见 [0.1.2 远程发布验收](docs/0.1.2远程发布验收.md)。
+Maven `0.1.2` 已发布 [prerelease](https://github.com/gycrosskit/sound/releases/tag/0.1.2)，修复 Android Main 线程入口；HAR 保持 `0.1.0`。Release 归档重下载 SHA 与 JitPack 全制品审计通过；精确合并提交、校验值、渠道限制及独立消费状态见 [0.1.2 远程发布验收](docs/0.1.2远程发布验收.md)。
 
 ## 架构与调用流程
 
@@ -98,6 +98,12 @@ dependencyResolutionManagement {
         maven { url = uri("https://jitpack.io") }
         maven { url = uri("https://maven.eazytec-cloud.com/nexus/repository/maven-public/") }
         maven { url = uri("https://mirrors.tencent.com/nexus/repository/maven-tencent/") }
+        exclusiveContent {
+            forRepository {
+                maven { url = uri("https://mirrors.tencent.com/nexus/repository/maven-tencent/") }
+            }
+            filter { includeGroup("com.tencent.kuikly-open") }
+        }
     }
 }
 ```

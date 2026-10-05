@@ -25,11 +25,11 @@ class AndroidSoundPlayer(
     private var remotePlayer: MediaPlayer? = null
     private var localPlayer: MediaPlayer? = null
 
-    override fun prepare(remoteUrl: String?) {
-        val nextState = mutableState.value.nextPreparationState(remoteUrl) ?: return
+    override fun prepare(remoteUrl: String?) = onMain {
+        val nextState = mutableState.value.nextPreparationState(remoteUrl) ?: return@onMain
         releaseRemote()
         mutableState.value = nextState
-        if (nextState.phase != SoundPhase.PREPARING) return
+        if (nextState.phase != SoundPhase.PREPARING) return@onMain
         val normalizedUrl = nextState.remoteUrl
         val candidate = MediaPlayer()
         remotePlayer = candidate
@@ -70,8 +70,8 @@ class AndroidSoundPlayer(
         }
     }
 
-    override fun play() {
-        if (mutableState.value.phase == SoundPhase.RELEASED) return
+    override fun play() = onMain {
+        if (mutableState.value.phase == SoundPhase.RELEASED) return@onMain
         val remote = remotePlayer
         if (mutableState.value.phase == SoundPhase.REMOTE_READY && remote != null) {
             localPlayer?.release()
@@ -143,11 +143,16 @@ class AndroidSoundPlayer(
         prepareTimeout = null
     }
 
-    override fun release() {
+    override fun release() = onMain {
         releaseRemote()
         localPlayer?.release()
         localPlayer = null
         mutableState.value = SoundState(SoundPhase.RELEASED)
+    }
+
+    // MediaPlayer 在 Main 创建，系统回调、准备超时和所有入口共用同一线程，避免 Kuikly Renderer 与释放交叉。
+    private inline fun onMain(crossinline action: () -> Unit) {
+        if (Looper.myLooper() == Looper.getMainLooper()) action() else mainHandler.post { action() }
     }
 
     private companion object {

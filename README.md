@@ -2,7 +2,9 @@
 
 Android、iOS 和 HarmonyOS 的单个短音效播放器：HTTPS 预加载、从头重播、宿主本地资源回退、准备状态和生命周期释放。音效开关、业务事件去重、奖励触发及具体音频文件均由宿主负责。组件没有内置 `reward_coin.wav`、业务接口或账号。
 
-Maven `0.1.1` 已发布：[GitHub Release](https://github.com/gycrosskit/sound/releases/tag/0.1.1)，JitPack 状态 `ok`，独立消费的Android、iOS arm64/x64 编译、iOS Simulator Framework 链接、OHOS 编译通过。 HAR `0.1.0` 已通过 OHPM 审核并上架，正式 Registry 精确版本安装和独立 assembleHar 已通过；GitHub Release HAR 已远程下载、SHA-256 校验、安装到独立工程并 assembleHar 成功。OHPM 不支持此 HAR URL 直接依赖，验收使用下载缓存的 file 依赖，另已使用正式 Registry 版本重新验收安装与编译。
+本轮 Maven 候选版本为 `0.1.2`，包含 Android 任意线程入口修复与归档前 metadata 门禁；尚未发布，状态见 [0.1.2 远程发布验收](docs/0.1.2远程发布验收.md)。HAR 源码本轮未改动，继续使用 `@gycrosskit/sound@0.1.0`。接入边界见 [组件接入](docs/组件接入.md)。
+
+上一轮 Maven `0.1.1` 发布记录：[GitHub Release](https://github.com/gycrosskit/sound/releases/tag/0.1.1)，JitPack 状态 `ok`，独立消费的Android、iOS arm64/x64 编译、iOS Simulator Framework 链接、OHOS 编译通过。 HAR `0.1.0` 已通过 OHPM 审核并上架，正式 Registry 精确版本安装和独立 assembleHar 已通过；GitHub Release HAR 已远程下载、SHA-256 校验、安装到独立工程并 assembleHar 成功。OHPM 不支持此 HAR URL 直接依赖，验收使用下载缓存的 file 依赖，另已使用正式 Registry 版本重新验收安装与编译。
 
 ## 架构与调用流程
 
@@ -37,7 +39,7 @@ flowchart TD
     X --> Z["RELEASED：prepare / play 无效<br/>重用须新建实例"]
 ```
 
-Kotlin `release()` 同步关闭本实例资格。OHOS 原生 `release()` 立即发布 RELEASED，并返回等待本地 AVPlayer 与 rawfile 描述符串行释放的 Promise；远端异步释放已经发起，不属于该 Promise 的完成保证。Android 按播放器对象、iOS/OHOS 按 generation 拒绝替换或释放前的迟回调；Kuikly Kotlin `release()` 移除常驻 callback 并异步通知原生。
+Android `release()` 在 Main 上同步执行；后台调用排入 Main，观察 `state.phase == RELEASED` 确认关闭已执行，调用返回本身不保证资源已释放。iOS 与 Kuikly Kotlin `release()` 在各自所属线程同步关闭本实例资格。OHOS 原生 `release()` 立即发布 RELEASED，并返回等待本地 AVPlayer 与 rawfile 描述符串行释放的 Promise；远端异步释放已经发起，不属于该 Promise 的完成保证。Android 按播放器对象、iOS/OHOS 按 generation 拒绝替换或释放前的迟回调；Kuikly Kotlin `release()` 移除常驻 callback 并异步通知原生。
 
 ```mermaid
 classDiagram
@@ -84,7 +86,7 @@ classDiagram
 | `verification-consumer` | 无 project 依赖的独立 Maven 消费工程 |
 | `verification-har` | 用打包后的本地 HAR 文件安装的独立 ArkTS 消费工程 |
 
-Android 最低 API 24。iOS 使用 AVAudioPlayer，建议宿主最低 iOS 14。HAR 本轮使用 HarmonyOS API 26 SDK 构建，`compatibleSdkVersion` 为 API 22；API 22 真机兼容性尚未验收。许可证 Apache-2.0。抽离自接入项目已有 `RewardAudioPlatform`、Android/iOS 实现及 OHOS RewardAudioModule，保留原生播放器与取消机制；第三方依赖各自遵循原许可。
+Android 最低 API 24。iOS 使用 AVAudioPlayer，建议宿主最低 iOS 14。HAR `0.1.0` 使用 HarmonyOS API 26 SDK 构建，`compatibleSdkVersion` 为 API 22；API 22 真机兼容性尚未验收。许可证 Apache-2.0。抽离自接入项目已有 `RewardAudioPlatform`、Android/iOS 实现及 OHOS RewardAudioModule，保留原生播放器与取消机制；第三方依赖各自遵循原许可。
 
 ```kotlin
 interface SoundPlayer {
@@ -101,7 +103,7 @@ interface SoundPlayer {
 
 ## Gradle 接入和版本
 
-Maven 坐标如下；使用 JitPack。远程可用性以 [VERIFICATION.md](VERIFICATION.md) 的发布和独立消费结果为准：
+以下为待发布 Maven `0.1.2` 的接入坐标，使用 JitPack；发布前请保留已验收的 `0.1.1`。HAR 独立保持 `0.1.0`。本轮远程可用性以 [0.1.2 远程发布验收](docs/0.1.2远程发布验收.md) 的门禁结果为准，历史结果保留在 [VERIFICATION.md](VERIFICATION.md)：
 
 ```kotlin
 repositories {
@@ -114,16 +116,18 @@ repositories {
     maven("https://mirrors.tencent.com/nexus/repository/maven-public/")
 }
 commonMain.dependencies {
-    implementation("com.github.gycrosskit.sound:sound-core:0.1.1")
+    implementation("com.github.gycrosskit.sound:sound-core:0.1.2")
 }
 ohosArm64Main.dependencies {
-    implementation("com.github.gycrosskit.sound:sound-kuikly:0.1.1")
+    implementation("com.github.gycrosskit.sound:sound-kuikly:0.1.2")
 }
 ```
 
 工具链 Kotlin `2.2.21-1.0.0`、coroutines `1.10.2-1.0.0`、Ktor `3.3.3-1.1.0-04`，Kuikly `2.28.0-2.0.21-ohos`；包含 OHOS target 的消费方需要匹配的厂商 Kotlin 工具链。只有 iOS 使用 Ktor Darwin HTTP 引擎；其他平台仅共用 Ktor URL 校验。
 
 ## Android
+
+下述 Android 自动切回 Main 的契约属于 `0.1.2` 源码候选，已发布的 `0.1.1` 仍要求宿主在 Main 调用。
 
 ```kotlin
 val sound = AndroidSoundPlayer(context, R.raw.host_sound)
@@ -133,7 +137,7 @@ sound.play()
 sound.release()
 ```
 
-宿主提供有效的 `res/raw` 资源 ID。AAR Manifest 声明 `android.permission.INTERNET`，只保留 Application Context。远端使用 MediaPlayer 与 `USAGE_ASSISTANCE_SONIFICATION`，本地使用 MediaPlayer.create 默认音频属性；本地资源不可用时停止该次播放，不抛给业务。所有入口在主线程调用。
+宿主提供有效的 `res/raw` 资源 ID。AAR Manifest 声明 `android.permission.INTERNET`，只保留 Application Context。远端使用 MediaPlayer 与 `USAGE_ASSISTANCE_SONIFICATION`，本地使用 MediaPlayer.create 默认音频属性；本地资源不可用时停止该次播放，不抛给业务。入口可由任意线程调用：Main 上立即执行，后台或 Kuikly Renderer 调用排入 Main；MediaPlayer 的创建、回调、超时与释放均在 Main 串行执行。Main 上的 `release()` 可先于已排队调用执行；永久关闭后的实例不会被迟到准备、播放或回调重新激活。
 
 ## iOS
 
@@ -145,7 +149,7 @@ sound.play()
 sound.release()
 ```
 
-宿主将文件加入对应 Bundle。Swift 直接调用时，将 `sound-core` 作为 `api` 依赖，并在宿主的 iOS `binaries.framework` 中 `export("com.github.gycrosskit.sound:sound-core:0.1.1")`；状态流观察可留在 Kotlin 层转给 Swift。不需要额外 Swift Package 或宿主 Swift 播放桥。组件不修改 AVAudioSession，全局音频会话、静音键、后台播放和与其他音频的交互由宿主决定。所有入口在主线程调用。本地文件缺失或不能播放时静默结束该次播放。
+宿主将文件加入对应 Bundle。Swift 直接调用时，将 `sound-core` 作为 `api` 依赖，并在宿主的 iOS `binaries.framework` 中 `export("com.github.gycrosskit.sound:sound-core:0.1.2")`；状态流观察可留在 Kotlin 层转给 Swift。不需要额外 Swift Package 或宿主 Swift 播放桥。组件不修改 AVAudioSession，全局音频会话、静音键、后台播放和与其他音频的交互由宿主决定。所有入口在主线程调用。本地文件缺失或不能播放时静默结束该次播放。
 
 ## HarmonyOS 原生与 Kuikly
 
@@ -173,7 +177,7 @@ Kuikly ArkTS 侧注册 HAR 导出的 `SoundModule.MODULE_NAME`（`GycSound`）�
 
 ## 生命周期、超时和大小边界
 
-`release()` 永久关闭实例且可重复调用；之后 `prepare` / `play` 均无效。重新进入页面或会话应创建新实例。关闭时停止播放、取消计时器和下载任务，替换或关闭后旧回调不会修改新状态。
+`release()` 永久关闭实例且可重复调用；关闭执行后 `prepare` / `play` 均无效。Android 后台调用需等 Main 执行并发布 `RELEASED`，排队前不能视为已关闭。重新进入页面或会话应创建新实例。关闭时停止播放、取消计时器和下载任务，替换或关闭后旧回调不会修改新状态。
 
 | 平台 | 准备和大小边界 |
 | --- | --- |
@@ -197,15 +201,14 @@ DEVECO_SDK_HOME=/Applications/DevEco-Studio.app/Contents/sdk \
 
 运行 HAR 构建前先 `ohpm install --all`；将 DevEco 的 `tools/node/bin` 与 `tools/ohpm/bin` 加入 PATH。`verification/ohos-behavior.cjs` 使用 SDK TypeScript 转译器运行真实 ArkTS 源码与可控系统播放器替身，支持 `SOUND_TYPESCRIPT` 覆盖转译器路径。这是行为测试，不能代替真机音频播放验收。
 
-Maven 全变体输出到 `build/maven`，独立消费工程默认使用 JitPack；本地验证显式传 `-PsoundMavenRepo="$PWD/build/maven"`，通过 Maven 坐标解析 Android/iOS/OHOS 产物。`scripts/verify.sh` 使用 `--max-workers=1` 限制编译资源。实际验证结果与命令见 [VERIFICATION.md](VERIFICATION.md)。
+Maven 全变体输出到 `build/maven`，独立消费工程默认使用 JitPack；本地验证显式传 `-PsoundMavenRepo="$PWD/build/maven"`，通过 Maven 坐标解析 Android/iOS/OHOS 产物。`scripts/verify.sh` 使用 `--max-workers=1 --no-parallel` 限制编译资源，并在发布到 staging 后运行 `scripts/prepare-maven.sh`：只规范化当前版本 metadata，归档仅携带当前版本，在临时目录解包后执行严格门禁，通过后才更新 `build/sound-maven.tar.gz`。实际本轮结果见 [0.1.2 远程发布验收](docs/0.1.2远程发布验收.md)，历史结果见 [VERIFICATION.md](VERIFICATION.md)。
 
 本地归档准备命令（仅生成本地文件）：
 
 ```shell
-COPYFILE_DISABLE=1 tar -czf build/sound-maven.tar.gz -C build/maven .
-shasum -a 256 build/sound-maven.tar.gz
+VERSION=0.1.2 bash scripts/prepare-maven.sh
 ```
 
-`jitpack-install.sh` 和 `jitpack-metadata.py` 从 GY CrossKit `.github/templates` 同步；后者只在 JitPack 安装归档后移除已知会被重写到缺失文件的 Sources/Metadata 变体，平台 API/runtime 变体保留。
+`scripts/jitpack-metadata.py` 与 `scripts/check-maven.py` 使用组织发布门禁标准：在 macOS 归档前移除 JitPack 无法保持 classifier 的 Sources/Metadata 变体；仅空资源 ZIP 可省略，非空资源必须先修正发布，平台 API/runtime 变体保留。规范化刷新 metadata 的现有四种校验值；门禁要求全部 POM、metadata、实际文件的 MD5/SHA-1/SHA-256/SHA-512 声明与 sidecar 一致，POM 带 Apache-2.0 许可证，重定向拥有对应目标变体且八项 publication 集合精确匹配。`release-pack.py` 只归档所选版本，不写 macOS 扩展属性。JitPack Linux 端只校验归档 SHA-256 并原字节解包，不改 metadata。
 
-`jitpack.yml` / `jitpack-install.sh` 保留 macOS 预构建 Maven 归档安装入口。正式发布前，在匹配标签下发布 `sound-maven.tar.gz` 并把不可变标签与归档 SHA-256 写入 `release-checksums.txt`；没有校验值时安装脚本直接失败。还需核验远程 JitPack metadata/变体、干净远程 Maven 消费、ohpm prepublish 与上架后安装。远程 Maven 与 GitHub Release HAR 消费通过，OHPM Registry 安装与独立编译已通过。
+`jitpack.yml` / `jitpack-install.sh` 保留 macOS 预构建 Maven 归档安装入口。正式发布前，在匹配标签下发布 `sound-maven.tar.gz` 并把不可变标签与归档 SHA-256 写入 `release-checksums.txt`；没有校验值时安装脚本直接失败。`0.1.2` 仍需完成全平台 staging、严格门禁、归档 SHA、远程 JitPack 全变体和独立 Maven 消费；尚未追加该版本校验值。历史 `0.1.1` Maven 与 `0.1.0` HAR 验收不代表 `0.1.2` 已远程可用；HAR 本轮无重新发布计划。

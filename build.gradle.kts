@@ -4,5 +4,21 @@ plugins {
 }
 allprojects {
     group = providers.environmentVariable("GROUP").orElse("com.github.gycrosskit.sound").get()
-    version = providers.environmentVariable("VERSION").orElse("0.1.1").get()
+    version = providers.environmentVariable("VERSION").orElse("0.1.2").get()
+}
+
+subprojects {
+    plugins.withId("maven-publish") {
+        extensions.configure<org.gradle.api.publish.PublishingExtension> {
+            publications.withType<org.gradle.api.publish.maven.MavenPublication>().configureEach {
+                pom.licenses {
+                    license {
+                        name.set("Apache License, Version 2.0")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                        distribution.set("repo")
+                    }
+                }
+            }
+        }
+    }
 }

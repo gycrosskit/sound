@@ -2,7 +2,7 @@
 
 Android、iOS 和 HarmonyOS 的单个短音效播放器，支持 HTTPS 预加载、从头重播、宿主本地资源回退、准备状态和生命周期释放。音频文件、开关和业务事件由宿主提供。
 
-本轮 Maven `0.1.3` 候选修复 iOS Main 线程入口，HAR 源码不变并保持 `0.1.0`，远程发布尚待验收。以下安装示例对应候选版本。
+Maven `0.1.3` 已发布并通过 JitPack 全制品校验与 Android/iOS/OHOS 干净消费，修复 iOS Main 线程入口；HAR 源码不变，保持 `0.1.0`。版本、校验值与验证边界见 [0.1.3 远程发布验收](docs/0.1.3远程发布验收.md)。
 
 历史 Maven `0.1.2` 已发布 [prerelease](https://github.com/gycrosskit/sound/releases/tag/0.1.2)，修复 Android Main 线程入口；HAR 保持 `0.1.0`。Release 归档重下载 SHA 与 JitPack 全制品审计通过；精确合并提交、校验值、渠道限制及独立消费状态见 [0.1.2 远程发布验收](docs/0.1.2远程发布验收.md)。
 
@@ -128,7 +128,7 @@ HarmonyOS 原生宿主：
 ohpm install @gycrosskit/sound@0.1.0
 ```
 
-插件仓库、Kuikly 依赖及注册见[接入指南](docs/接入指南.md)。Maven `0.1.3` 候选与 HAR `0.1.0` 分别版本化。
+插件仓库、Kuikly 依赖及注册见[接入指南](docs/接入指南.md)。Maven `0.1.3` 与 HAR `0.1.0` 分别版本化。
 
 ## 快速使用
 

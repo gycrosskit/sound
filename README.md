@@ -162,3 +162,5 @@ iOS 远端完整下载上限 2 MiB；Android/OHOS 使用原生网络预缓冲且
 现有记录覆盖远程 Maven / OHPM 产物编译、iOS Simulator 链接、Swift typecheck 和行为替身测试；真机播放、音频会话及 API 22 设备兼容仍待宿主验收。
 
 自有源码使用 [Apache-2.0](LICENSE)，第三方依赖遵循各自许可。
+
+本轮全生产文件覆盖与未测项见[完整源码审查](docs/完整源码审查.md)。

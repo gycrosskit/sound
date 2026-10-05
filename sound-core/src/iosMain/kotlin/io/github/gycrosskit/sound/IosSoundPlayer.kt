@@ -27,7 +27,12 @@ import kotlinx.coroutines.launch
 import platform.AVFAudio.AVAudioPlayer
 import platform.Foundation.NSBundle
 
-/** 将远端短音效预加载到进程内播放器；请求或解码失败时继续播放宿主 Bundle 音效。 */
+/** 将远端短音效预加载到进程内播放器；请求或解码失败时继续播放宿主 Bundle 音效。
+ *
+ * 主线程创建和调用；release 同时关闭网络请求和播放器。
+ * @param fallbackResourceName 宿主 Bundle 的无扩展名音效文件名。
+ * @param fallbackResourceExtension 音效扩展名；默认 Bundle 为 mainBundle。
+ */
 class IosSoundPlayer(
     private val fallbackResourceName: String,
     private val fallbackResourceExtension: String,

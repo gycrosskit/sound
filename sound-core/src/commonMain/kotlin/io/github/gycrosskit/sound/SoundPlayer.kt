@@ -13,6 +13,11 @@ enum class SoundPhase {
     REMOTE_FAILED,
 }
 
+/**
+ * 播放器状态快照；不代表本地音效已播放或远端文件完整下载。
+ * @property phase 默认 LOCAL_ONLY；RELEASED 是不可重开的终态。
+ * @property remoteUrl 已准入或被拒绝的远端地址，默认空串；避免日志记录地址中的业务查询参数。
+ */
 data class SoundState(
     val phase: SoundPhase = SoundPhase.LOCAL_ONLY,
     val remoteUrl: String = "",
@@ -20,6 +25,7 @@ data class SoundState(
 
 /** 单个短音效播放器。Android 自动切回 Main；iOS 在主线程调用，Kuikly Module 在页面线程调用。 */
 interface SoundPlayer {
+    /** 只读当前状态；异步 prepare 的结果通过此流观察。 */
     val state: StateFlow<SoundState>
 
     /** 空地址恢复内置音效；非空地址由平台播放器异步预缓冲，不阻塞业务页面。 */
@@ -32,7 +38,7 @@ interface SoundPlayer {
     fun release()
 }
 
-/** Kotlin 调用方共用同一地址准入规则，避免两端对空白、协议和 Host 的判断漂移。 */
+/** 去除首尾空白并只接受无凭据的 HTTPS 地址；空值、内嵌空白或非法 Host 返回 null。 */
 fun normalizeSoundUrl(remoteUrl: String?): String? {
     val value = remoteUrl?.trim().orEmpty()
     if (value.isEmpty() || value.any(Char::isWhitespace)) return null
@@ -49,7 +55,7 @@ fun normalizeSoundUrl(remoteUrl: String?): String? {
     }
 }
 
-/** 统一 Kotlin 调用方的地址拒绝、重复预加载和重试状态，只把实际播放交给平台实现。 */
+/** 计算准备状态：已释放或同址准备/就绪返回 null；失败同址可重试，空址恢复本地音效。 */
 fun SoundState.nextPreparationState(remoteUrl: String?): SoundState? {
     if (phase == SoundPhase.RELEASED) return null
     val normalizedUrl = normalizeSoundUrl(remoteUrl)

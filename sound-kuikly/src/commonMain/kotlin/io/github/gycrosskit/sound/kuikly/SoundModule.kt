@@ -10,7 +10,9 @@ import com.tencent.kuikly.core.nvi.serialization.json.JSONObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** 页面拥有播放器；所有入口沿 Kuikly 线程执行，根会话退出和页面销毁均调用 release。 */
+/** 页面拥有播放器；所有入口沿 Kuikly 线程执行，根会话退出和页面销毁均调用 release。
+ *
+ @param fallbackRawFile 宿主 rawfile 名称，必须非空；release 后需新建模块。 */
 class SoundModule(private val fallbackRawFile: String) : Module(), SoundPlayer {
     init { require(fallbackRawFile.isNotBlank()) }
     private val mutableState = MutableStateFlow(SoundState())
@@ -59,5 +61,8 @@ class SoundModule(private val fallbackRawFile: String) : Module(), SoundPlayer {
         callbackRef = null
     }
 
-    companion object { const val NAME = "GycSound" }
+    companion object {
+        /** 原生 SoundModule 注册名。 */
+        const val NAME = "GycSound"
+    }
 }

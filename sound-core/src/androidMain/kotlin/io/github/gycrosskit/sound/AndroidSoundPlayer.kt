@@ -9,7 +9,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** 在进程内预缓冲远端短音效，远端尚未就绪或播放异常时立即回退安装包内音效。 */
+/** 在进程内预缓冲远端短音效，远端尚未就绪或播放异常时立即回退安装包内音效。
+ *
+ * @param context 仅保留 applicationContext，不持有页面。
+ * @param fallbackSoundResId 宿主非零 raw 音效资源；远端 5 秒未就绪时继续本地播放。
+ */
 class AndroidSoundPlayer(
     context: Context,
     private val fallbackSoundResId: Int,

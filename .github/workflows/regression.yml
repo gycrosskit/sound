@@ -44,6 +44,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
       - run: test -f "$ANDROID_HOME/platforms/android-36/android.jar"
       - run: bash gradlew --init-script "$PWD/scripts/ci-repositories.gradle" :sound-core:testDebugUnitTest :sound-core:compileDebugKotlinAndroid --no-daemon --max-workers=1
   native:
@@ -57,6 +58,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
       - run: |
           case "$(uname -m)" in
             arm64) native_target=IosSimulatorArm64; native_test=iosSimulatorArm64Test ;;
@@ -89,6 +91,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
       - run: test -f "$ANDROID_HOME/platforms/android-36/android.jar"
       - run: bash scripts/ci-release.sh
       - run: bash gradlew --init-script "$PWD/scripts/ci-repositories.gradle" -p verification-consumer compileDebugKotlinAndroid -PsoundVersion="$VERSION" --refresh-dependencies --no-daemon --max-workers=1
@@ -106,6 +109,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
       - run: bash scripts/ci-release.sh
       - run: |
           case "$(uname -m)" in

@@ -25,7 +25,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import platform.AVFAudio.AVAudioPlayer
+import platform.AVFAudio.AVAudioPlayerDelegateProtocol
 import platform.Foundation.NSBundle
+import platform.Foundation.NSError
+import platform.darwin.NSObject
 import platform.Foundation.NSThread
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -35,27 +38,29 @@ import kotlin.coroutines.EmptyCoroutineContext
  * @param fallbackResourceName 宿主 Bundle 的无扩展名音效文件名。
  * @param fallbackResourceExtension 音效扩展名；默认 Bundle 为 mainBundle。
  */
-class IosSoundPlayer(
+class IosSoundPlayer internal constructor(
     private val fallbackResourceName: String,
     private val fallbackResourceExtension: String,
-    private val bundle: NSBundle = NSBundle.mainBundle,
+    private val bundle: NSBundle,
+    private val client: HttpClient,
+    private val createRemotePlayer: (NSData) -> AVAudioPlayer = ::remoteAudioPlayer,
 ) : SoundPlayer {
+    constructor(fallbackResourceName: String, fallbackResourceExtension: String, bundle: NSBundle = NSBundle.mainBundle) :
+        this(fallbackResourceName, fallbackResourceExtension, bundle, soundHttpClient())
     init { require(fallbackResourceName.isNotBlank() && fallbackResourceExtension.isNotBlank()) }
     private val mutableState = MutableStateFlow(SoundState())
     override val state: StateFlow<SoundState> = mutableState.asStateFlow()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private val client = HttpClient(Darwin) {
-        install(HttpTimeout) {
-            connectTimeoutMillis = REMOTE_AUDIO_TIMEOUT_MILLIS
-            requestTimeoutMillis = REMOTE_AUDIO_TIMEOUT_MILLIS
-            socketTimeoutMillis = REMOTE_AUDIO_TIMEOUT_MILLIS
-        }
-    }
     private var requestGeneration = 0
     private var preloadJob: Job? = null
-    private var remotePlayer: AVAudioPlayer? = null
-    private var localPlayer: AVAudioPlayer? = null
+    internal var remotePlayer: AVAudioPlayer? = null
+        private set
+    // AVAudioPlayer 的 delegate 是 weak，必须随远端播放器保留，释放时同时断开。
+    private var remoteDelegate: IosSoundPlaybackDelegate? = null
+    private var remotePlaybackRequested = false
+    internal var localPlayer: AVAudioPlayer? = null
+        private set
 
     @OptIn(BetaInteropApi::class, ExperimentalForeignApi::class)
     override fun prepare(remoteUrl: String?) = onMain {
@@ -73,9 +78,20 @@ class IosSoundPlayer(
                     return@launch
                 }
                 val data = bytes.usePinned { NSData.create(bytes = it.addressOf(0), length = bytes.size.toULong()) }
-                val prepared = AVAudioPlayer(data = data, error = null)
+                val prepared = createRemotePlayer(data)
                 if (prepared.prepareToPlay() && generation == requestGeneration) {
                     remotePlayer = prepared
+                    val delegate = IosSoundPlaybackDelegate(
+                        finished = { player, success -> onMain {
+                            if (remotePlayer == player && generation == requestGeneration) {
+                                if (success) remotePlaybackRequested = false
+                                else remotePlaybackFailed(player, generation, value)
+                            }
+                        } },
+                        failed = { player -> onMain { remotePlaybackFailed(player, generation, value) } },
+                    )
+                    remoteDelegate = delegate
+                    prepared.delegate = delegate
                     preloadJob = null
                     mutableState.value = SoundState(
                         phase = SoundPhase.REMOTE_READY,
@@ -101,6 +117,7 @@ class IosSoundPlayer(
             localPlayer?.stop()
             localPlayer = null
             remote.currentTime = 0.0
+            remotePlaybackRequested = true
             if (!remote.play()) {
                 markRemoteFailed(requestGeneration, mutableState.value.remoteUrl)
                 playLocal()
@@ -112,6 +129,8 @@ class IosSoundPlayer(
 
     @OptIn(BetaInteropApi::class, ExperimentalForeignApi::class)
     private fun playLocal() {
+        // StateFlow 的同步观察者可能在 REMOTE_FAILED 回执里 release；回退不能越过终态。
+        if (mutableState.value.phase == SoundPhase.RELEASED) return
         val url = bundle.URLForResource(fallbackResourceName, fallbackResourceExtension) ?: return
         localPlayer?.stop()
         localPlayer = null
@@ -132,10 +151,20 @@ class IosSoundPlayer(
         )
     }
 
+    private fun remotePlaybackFailed(player: AVAudioPlayer, generation: Int, remoteUrl: String) {
+        if (remotePlayer != player || generation != requestGeneration) return
+        val fallback = remotePlaybackRequested
+        markRemoteFailed(generation, remoteUrl)
+        if (fallback) playLocal()
+    }
+
     private fun releaseRemote() {
         requestGeneration += 1
         preloadJob?.cancel()
         preloadJob = null
+        remotePlaybackRequested = false
+        remotePlayer?.delegate = null
+        remoteDelegate = null
         remotePlayer?.stop()
         remotePlayer = null
     }
@@ -155,10 +184,27 @@ class IosSoundPlayer(
         if (NSThread.isMainThread) action() else Dispatchers.Main.dispatch(EmptyCoroutineContext) { action() }
     }
 
-    private companion object {
-        const val REMOTE_AUDIO_TIMEOUT_MILLIS = 5_000L
+}
+
+@OptIn(BetaInteropApi::class)
+private class IosSoundPlaybackDelegate(
+    private val finished: (AVAudioPlayer, Boolean) -> Unit,
+    private val failed: (AVAudioPlayer) -> Unit,
+) : NSObject(), AVAudioPlayerDelegateProtocol {
+    override fun audioPlayerDidFinishPlaying(player: AVAudioPlayer, successfully: Boolean) = finished(player, successfully)
+    override fun audioPlayerDecodeErrorDidOccur(player: AVAudioPlayer, error: NSError?) = failed(player)
+}
+
+private fun soundHttpClient(): HttpClient = HttpClient(Darwin) {
+    install(HttpTimeout) {
+        connectTimeoutMillis = 5_000L
+        requestTimeoutMillis = 5_000L
+        socketTimeoutMillis = 5_000L
     }
 }
+
+@OptIn(BetaInteropApi::class, ExperimentalForeignApi::class)
+private fun remoteAudioPlayer(data: NSData): AVAudioPlayer = AVAudioPlayer(data = data, error = null)
 
 /** 流式读取且最多多读一个字节来判定超限，不能信任缺失或错误的 Content-Length。 */
 internal suspend fun HttpClient.loadSound(url: String): ByteArray? = prepareGet(url).execute { response ->

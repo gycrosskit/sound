@@ -32,6 +32,7 @@ jobs:
           persist-credentials: false
       - run: npm install --prefix "$RUNNER_TEMP/ci-tools" --ignore-scripts --no-audit --no-fund typescript@4.9.5
       - run: |
+          python3 verification/ci/test_fork_host.py
           python3 scripts/test-check-maven.py
           python3 scripts/test-jitpack-metadata.py
           python3 scripts/test-prepare-maven.py
@@ -48,8 +49,9 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: gradle
+      - run: bash scripts/ci-pin-fork-host.sh
       - run: test -f "$ANDROID_HOME/platforms/android-36/android.jar"
-      - run: bash gradlew --init-script "$PWD/scripts/ci-repositories.gradle" :sound-core:testDebugUnitTest :sound-core:compileDebugKotlinAndroid --no-daemon --max-workers=1
+      - run: bash gradlew --init-script "$PWD/scripts/ci-repositories.gradle" :sound-core:testDebugUnitTest :sound-core:compileDebugKotlinAndroid --no-daemon --max-workers=1 --info --stacktrace
   native:
     runs-on: macos-15
     timeout-minutes: 60
@@ -62,13 +64,14 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: gradle
+      - run: bash scripts/ci-pin-fork-host.sh
       - run: |
           case "$(uname -m)" in
             arm64) native_target=IosSimulatorArm64; native_test=iosSimulatorArm64Test ;;
             x86_64) native_target=IosX64; native_test=iosX64Test ;;
             *) echo "Unsupported macOS architecture" >&2; exit 1 ;;
           esac
-          bash gradlew --init-script "$PWD/scripts/ci-repositories.gradle" :sound-core:compileKotlinIosArm64 :sound-core:compileKotlin${native_target} :sound-core:${native_test} :sound-core:compileKotlinOhosArm64 :sound-kuikly:compileKotlinOhosArm64 --no-daemon --max-workers=1
+          bash gradlew --init-script "$PWD/scripts/ci-repositories.gradle" :sound-core:compileKotlinIosArm64 :sound-core:compileKotlin${native_target} :sound-core:${native_test} :sound-core:compileKotlinOhosArm64 :sound-kuikly:compileKotlinOhosArm64 --no-daemon --max-workers=1 --info --stacktrace
           python3 - "sound-core/build/test-results/$native_test" <<'TEST_RESULTS'
           import sys, xml.etree.ElementTree as ET
           from pathlib import Path
@@ -95,9 +98,10 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: gradle
+      - run: bash scripts/ci-pin-fork-host.sh
       - run: test -f "$ANDROID_HOME/platforms/android-36/android.jar"
       - run: bash scripts/ci-release.sh
-      - run: bash gradlew --init-script "$PWD/scripts/ci-repositories.gradle" -p verification-consumer compileDebugKotlinAndroid -PsoundVersion="$VERSION" --refresh-dependencies --no-daemon --max-workers=1
+      - run: bash gradlew --init-script "$PWD/scripts/ci-repositories.gradle" -p verification-consumer compileDebugKotlinAndroid -PsoundVersion="$VERSION" --refresh-dependencies --no-daemon --max-workers=1 --info --stacktrace
   release-native:
     if: github.event_name == 'pull_request' || github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.version != '')
     runs-on: macos-15
@@ -113,6 +117,7 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: gradle
+      - run: bash scripts/ci-pin-fork-host.sh
       - run: bash scripts/ci-release.sh
       - run: |
           case "$(uname -m)" in
@@ -120,7 +125,7 @@ jobs:
             x86_64) native_target=IosX64; native_test=iosX64Test ;;
             *) echo "Unsupported macOS architecture" >&2; exit 1 ;;
           esac
-          bash gradlew --init-script "$PWD/scripts/ci-repositories.gradle" -p verification-consumer linkDebugFramework${native_target} compileKotlinOhosArm64 -PsoundVersion="$VERSION" --refresh-dependencies --no-daemon --max-workers=1
+          bash gradlew --init-script "$PWD/scripts/ci-repositories.gradle" -p verification-consumer linkDebugFramework${native_target} compileKotlinOhosArm64 -PsoundVersion="$VERSION" --refresh-dependencies --no-daemon --max-workers=1 --info --stacktrace
       - run: |
           case "$(uname -m)" in
             arm64) framework_target=iosSimulatorArm64 ;;

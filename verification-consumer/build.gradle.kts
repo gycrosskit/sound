@@ -2,7 +2,7 @@ plugins {
     kotlin("multiplatform") version "2.2.21-1.0.0"
     id("com.android.library") version "8.10.1"
 }
-val soundVersion = providers.gradleProperty("soundVersion").orElse("0.1.3").get()
+val soundVersion = providers.gradleProperty("soundVersion").orElse("0.1.5").get()
 kotlin {
     androidTarget { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11) } }
     iosArm64()

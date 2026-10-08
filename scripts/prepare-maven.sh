@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-version="${VERSION:-0.1.3}"
+version="${VERSION:-0.1.5}"
 # 只规范化当前候选版本，保留 staging 中历史版本的原字节。
 publications=(build/maven/com/github/gycrosskit/sound/*/"$version")
 python3 scripts/jitpack-metadata.py "${publications[@]}"

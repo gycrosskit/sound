@@ -152,5 +152,29 @@ const nextPlayer = async (player = new Player()) => { assert.ok(pending.length);
   assert.deepEqual(callbacks, ['failed', 'ready']);
   assert.equal(timers.size, 0);
   assert.equal(pending.length, 0);
+  // 状态回调可同步关闭/换址，旧 setup 与旧错误回退不能复活。
+  let releasing;
+  releasing = new SoundPlayer(resources, 'reentrant.wav', state => {
+    if (state.phase === 'PREPARING') releasing.release();
+  });
+  releasing.prepare('https://example.test/release.wav');
+  assert.equal(releasing.getState().phase, 'RELEASED');
+  assert.equal(pending.length, 0);
+  assert.equal(timers.size, 0);
+  let replacing;
+  replacing = new SoundPlayer(resources, 'reentrant.wav', state => {
+    if (state.phase === 'REMOTE_FAILED') replacing.prepare('https://example.test/replacement.wav');
+  });
+  replacing.prepare('https://example.test/playing.wav');
+  const failing = await nextPlayer();
+  replacing.play(); await settle();
+  const openedBeforeReentry = opened.length;
+  failing.emit('error', new Error('playback failed'));
+  await settle();
+  assert.equal(replacing.getState().phase, 'PREPARING');
+  assert.equal(pending.length, 1, 'only the replacement remote may be created, not old local fallback');
+  await nextPlayer();
+  assert.equal(opened.length, openedBeforeReentry);
+  await replacing.release();
   console.log('OHOS behavior: Player URL, replacement, replay, fallback, timeout, terminal release; Renderer destroy, pending create and stale callbacks passed');
 })().catch(error => { console.error(error); process.exitCode = 1; });

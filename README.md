@@ -1,6 +1,14 @@
 # GY CrossKit Sound
 
-当前源码新增[跨端行为候选](docs/跨端行为候选.md)，尚未发布；下方远程版本验收仍对应其既有不可变标签。
+## 当前功能与平台边界
+
+core 提供单短音效播放器、远端HTTPS预缓冲和本地回退；无CMP UI或Swift包装，sound-kuikly仅OHOS Module，A/i由宿主两套UI复用。
+
+适用版本：Maven 0.1.5；HAR 0.1.1。本次修复与平台边界见[功能与平台差异](docs/功能与平台差异.md)，构建与渠道验收见[版本发布记录](https://github.com/gycrosskit/sound/releases/tag/0.1.5)；下方旧版本记录保留其历史范围。
+
+当前测试覆盖、执行时点和未验收项集中见[验证范围](docs/功能与平台差异.md#验证范围)，复现命令见[开发与验证](docs/开发与验证.md)。
+
+此版本包含已复核的跨端行为修复；[历史源码候选记录](docs/跨端行为候选.md)和下方旧版验收保持其原时点，当前范围见顶部功能与平台差异。
 
 Android、iOS 和 HarmonyOS 的单个短音效播放器，支持 HTTPS 预加载、从头重播、宿主本地资源回退、准备状态和生命周期释放。音频文件、开关和业务事件由宿主提供。
 
@@ -16,7 +24,7 @@ Maven `0.1.3` 已发布并通过 JitPack 全制品校验与 Android/iOS/OHOS 干
 flowchart TB
     H["宿主<br/>音频 / URL / play / release"] --> P["SoundPlayer<br/>SoundState"]
     P --> A["AndroidSoundPlayer<br/>MediaPlayer"]
-    P --> I["IosSoundPlayer<br/>Darwin / AVAudioPlayer"]
+    P --> I["IosSoundPlayer<br/>AVPlayer / AVAudioPlayer"]
     P --> K["SoundModule<br/>Kuikly Kotlin"]
     K --> R["SoundModule<br/>ArkTS Renderer"]
     R --> O["ArkTS SoundPlayer<br/>AVPlayer"]
@@ -25,7 +33,7 @@ flowchart TB
     K -.-> H
 ```
 
-`prepare()` 立即返回，准备结果异步更新；准备成功不自动播放。Android/OHOS 是网络预缓冲，iOS 完整下载到内存后解码（最大 2 MiB），不能统一当作离线缓存。
+`prepare()` 立即返回，准备结果异步更新；准备成功不自动播放。三端都使用原生网络预缓冲，不完整下载到库内 ByteArray/NSData，不能当作离线缓存。
 
 ```mermaid
 flowchart TD
@@ -76,7 +84,7 @@ classDiagram
     SoundState --> SoundPhase
 ```
 
-源码入口：[共享契约与 URL 规则](sound-core/src/commonMain/kotlin/io/github/gycrosskit/sound/SoundPlayer.kt)、[Android 播放器](sound-core/src/androidMain/kotlin/io/github/gycrosskit/sound/AndroidSoundPlayer.kt)、[iOS 下载与 generation](sound-core/src/iosMain/kotlin/io/github/gycrosskit/sound/IosSoundPlayer.kt)、[Kuikly Kotlin callback](sound-kuikly/src/commonMain/kotlin/io/github/gycrosskit/sound/kuikly/SoundModule.kt)、[OHOS Renderer](ohos/sound-native/src/main/ets/SoundModule.ets)、[OHOS 播放与串行释放](ohos/sound-native/src/main/ets/SoundPlayer.ets)。SoundState 不表示正在播放或本地资源可用；缺失或不可解码的本地资源会结束该次播放。
+源码入口：[共享契约与 URL 规则](sound-core/src/commonMain/kotlin/io/github/gycrosskit/sound/SoundPlayer.kt)、[Android 播放器](sound-core/src/androidMain/kotlin/io/github/gycrosskit/sound/AndroidSoundPlayer.kt)、[iOS 原生预缓冲与 generation](sound-core/src/iosMain/kotlin/io/github/gycrosskit/sound/IosSoundPlayer.kt)、[Kuikly Kotlin callback](sound-kuikly/src/commonMain/kotlin/io/github/gycrosskit/sound/kuikly/SoundModule.kt)、[OHOS Renderer](ohos/sound-native/src/main/ets/SoundModule.ets)、[OHOS 播放与串行释放](ohos/sound-native/src/main/ets/SoundPlayer.ets)。SoundState 不表示正在播放或本地资源可用；缺失或不可解码的本地资源会结束该次播放。
 
 ## 平台和 API
 
@@ -127,7 +135,7 @@ kotlin {
 HarmonyOS 原生宿主：
 
 ```sh
-ohpm install @gycrosskit/sound@0.1.0
+ohpm install @gycrosskit/sound@0.1.1
 ```
 
 插件仓库、Kuikly 依赖及注册见[接入指南](docs/接入指南.md)。Maven `0.1.3` 与 HAR `0.1.0` 分别版本化。
@@ -152,7 +160,7 @@ iOS 使用 `IosSoundPlayer("host_sound", "wav")`，文件放入宿主 Bundle；A
 
 `state` 只表示 `LOCAL_ONLY / PREPARING / REMOTE_READY / REMOTE_FAILED / RELEASED`，不表示正在播放。Android/iOS 的 prepare/play/release 可由任意线程调用：Main 立即执行，后台排入 Main；播放器创建、回调、超时、替换与释放共用 Main。Kuikly 使用所属页面线程。后台 `release()` 返回不代表已完成，以 `state.phase == RELEASED` 确认；关闭后排队请求不能复活实例。`release()` 永久关闭且可重复调用，再次使用需新实例；ArkTS 的释放包含异步资源清理。
 
-iOS 远端完整下载上限 2 MiB；Android/OHOS 使用原生网络预缓冲且无库内字节上限，不保证离线播放。宿主限制文件大小、时长及 HTTPS 重定向链，iOS 音频会话由宿主管理。
+三端使用原生网络预缓冲且无库内文件字节上限，不保证离线播放。宿主限制文件大小、时长及 HTTPS 重定向链，iOS 音频会话由宿主管理。
 
 ## 文档与支持
 

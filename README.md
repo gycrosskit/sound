@@ -126,7 +126,7 @@ dependencyResolutionManagement {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("com.github.gycrosskit.sound:sound-core:0.1.3")
+            implementation("com.github.gycrosskit.sound:sound-core:0.1.5")
         }
     }
 }

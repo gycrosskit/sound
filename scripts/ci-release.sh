@@ -7,7 +7,7 @@ checksum="$(awk -v version="$VERSION" '$1 == version {print $2}' release-checksu
 staging="$(mktemp -d)"
 trap 'rm -rf "$staging"' EXIT
 archive="$staging/sound-maven.tar.gz"
-curl -fsSL --retry 3 --connect-timeout 30 -o "$archive" "https://github.com/gycrosskit/sound/releases/download/$VERSION/sound-maven.tar.gz"
+curl -fsSL --retry 3 --connect-timeout 30 --max-time 300 -o "$archive" "https://github.com/gycrosskit/sound/releases/download/$VERSION/sound-maven.tar.gz"
 echo "$checksum  $archive" | shasum -a 256 -c -
 python3 - "$archive" "$staging/maven" <<'EXTRACT'
 import sys, tarfile
@@ -24,4 +24,4 @@ python3 scripts/check-maven.py "$staging/maven" com.github.gycrosskit.sound "$VE
 # 标签必须解析为不可变发布提交；不把当前 PR 的 SHA 当成已发布版本。
 commit="$(git ls-remote https://github.com/gycrosskit/sound.git "refs/tags/$VERSION" "refs/tags/$VERSION^{}" | awk '$2 ~ /\^\{\}$/ {peeled=$1} $2 !~ /\^\{\}$/ {direct=$1} END {print peeled ? peeled : direct}')"
 python3 scripts/check-public-maven.py --repo sound --version "$VERSION" --commit "$commit" \
-  --expected-publications sound-core,sound-core-android,sound-core-iosarm64,sound-core-iosx64,sound-core-iossimulatorarm64,sound-core-ohosarm64,sound-kuikly,sound-kuikly-ohosarm64 --output-dir "$staging/public"
+  --expected-publications sound-core,sound-core-android,sound-core-iosarm64,sound-core-iosx64,sound-core-iossimulatorarm64,sound-core-ohosarm64,sound-kuikly,sound-kuikly-ohosarm64 --output-dir "${CI_DIAGNOSTICS_DIR:-ci-diagnostics}/public"

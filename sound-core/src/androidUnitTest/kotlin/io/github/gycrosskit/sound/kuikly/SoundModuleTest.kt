@@ -3,8 +3,23 @@ package io.github.gycrosskit.sound.kuikly
 import com.tencent.kuikly.core.nvi.serialization.json.JSONObject
 import io.github.gycrosskit.sound.SoundPhase
 import kotlin.test.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class SoundModuleTest {
+    @Test fun preparingObserverReleasePreventsNativeSetupAfterClose() {
+        val module = SoundModule("host.wav")
+        val scope = CoroutineScope(Dispatchers.Unconfined)
+        scope.launch { module.state.collect { if (it.phase == SoundPhase.PREPARING) module.release() } }
+        try {
+            module.prepare("https://example.test/a.wav")
+            assertEquals(SoundPhase.RELEASED, module.state.value.phase)
+            assertEquals(listOf("release"), module.calls.map { it.method })
+            assertTrue(module.liveCallbacks.isEmpty())
+        } finally { scope.cancel(); module.release() }
+    }
     private fun status(value: String) = JSONObject().apply { put("status", value) }
 
     @Test fun replacementAndReleaseDiscardOldPreparationAndRevokeCallbacks() {

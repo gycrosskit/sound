@@ -25,15 +25,16 @@ class SoundModule(private val fallbackRawFile: String) : Module(), SoundPlayer {
     override fun prepare(remoteUrl: String?) {
         val next = mutableState.value.nextPreparationState(remoteUrl) ?: return
         clearCallback()
-        mutableState.value = next
         val request = generation
+        mutableState.value = next
+        if (generation != request) return
         val url = next.remoteUrl.takeIf { next.phase == SoundPhase.PREPARING }.orEmpty()
         val params = JSONObject().apply { put("url", url); put("rawfile", fallbackRawFile) }
         if (url.isEmpty()) {
             asyncToNativeMethod("prepare", params, null)
             return
         }
-        callbackRef = toNative(true, "prepare", params.toString(), { result ->
+        val reference = toNative(true, "prepare", params.toString(), { result ->
             if (generation == request) {
                 mutableState.value = next.copy(phase = when (result?.optString("status")) {
                     "ready" -> SoundPhase.REMOTE_READY
@@ -41,6 +42,7 @@ class SoundModule(private val fallbackRawFile: String) : Module(), SoundPlayer {
                 })
             }
         }, false).callbackRef
+        if (generation == request) callbackRef = reference else reference?.let(::removeCallback)
     }
 
     override fun play() {

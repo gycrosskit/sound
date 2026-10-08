@@ -1,6 +1,7 @@
 """验证归档编排：只修改候选版本，坏 publication 不能替换已验证归档。"""
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -58,7 +59,7 @@ class ArchivePreparation(unittest.TestCase):
             path.with_name(path.name + "." + algorithm).write_text(hashlib.new(algorithm, contents).hexdigest())
 
     def prepare(self):
-        return subprocess.run(["bash", "scripts/prepare-maven.sh"], cwd=self.root, capture_output=True, text=True)
+        return subprocess.run(["bash", "scripts/prepare-maven.sh"], cwd=self.root, capture_output=True, text=True, env={**os.environ, "VERSION": VERSION})
 
     def test_candidate_only_and_historical_bytes_preserved(self):
         result = self.prepare()

@@ -10,13 +10,11 @@ kotlin {
             api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2-1.0.0")
             implementation("io.ktor:ktor-http:3.3.3-1.1.0-04")
         }
-        iosMain.dependencies { implementation("io.ktor:ktor-client-darwin:3.3.3-1.1.0-04") }
         commonTest.dependencies { implementation(kotlin("test")) }
         // 执行生产页面桥，transport 替身不实现音效状态机。
         androidUnitTest { kotlin.srcDir(rootProject.file("sound-kuikly/src/commonMain/kotlin")) }
         androidUnitTest.dependencies { implementation("org.robolectric:robolectric:4.16.1") }
         iosTest.dependencies {
-            implementation("io.ktor:ktor-client-mock:3.3.3-1.1.0-04")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2-1.0.0")
         }
     }

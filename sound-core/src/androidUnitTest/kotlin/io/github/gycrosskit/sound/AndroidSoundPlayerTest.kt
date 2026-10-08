@@ -11,6 +11,10 @@ import org.robolectric.annotation.LooperMode
 import org.robolectric.shadows.ShadowMediaPlayer
 import org.robolectric.shadows.util.DataSource
 import java.time.Duration
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
@@ -20,6 +24,17 @@ import kotlin.test.assertTrue
 @Config(sdk = [28], manifest = Config.NONE)
 @LooperMode(LooperMode.Mode.PAUSED)
 class AndroidSoundPlayerTest {
+    @Test fun preparingObserverReleasePreventsCreatingAnOrphanPlayer() {
+        val created = recordPlayers()
+        val player = AndroidSoundPlayer(RuntimeEnvironment.getApplication(), 1)
+        val scope = CoroutineScope(Dispatchers.Unconfined)
+        scope.launch { player.state.collect { if (it.phase == SoundPhase.PREPARING) player.release() } }
+        try {
+            player.prepare(URL)
+            assertEquals(SoundPhase.RELEASED, player.state.value.phase)
+            assertTrue(created.isEmpty(), "released preparation must not create a native player")
+        } finally { scope.cancel(); player.release() }
+    }
     @Test
     fun rendererEntrypointsUseMainAndMainCallsRemainImmediate() {
         val created = recordPlayers()

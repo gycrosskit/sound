@@ -59,8 +59,9 @@ export class SoundPlayer {
         parsed.protocol !== 'https:' || parsed.hostname.length === 0 ||
         parsed.username.length > 0 || parsed.password.length > 0) { throw new Error('Invalid sound URL'); }
     } catch (_) { this.updateState('REMOTE_FAILED', url); return; }
-    this.updateState('PREPARING', url);
     const generation = this.remoteGeneration;
+    this.updateState('PREPARING', url);
+    if (this.destroyed || generation !== this.remoteGeneration) { return; }
     this.prepareTimer = setTimeout(() => this.failRemote(generation), 5000);
     this.prepareRemote(url, generation).catch(() => this.failRemote(generation));
   }
@@ -111,7 +112,9 @@ export class SoundPlayer {
     const fallback = this.remotePlaying;
     this.releaseRemote();
     this.updateState('REMOTE_FAILED', this.state.remoteUrl);
-    if (fallback) { this.playLocal(); }
+    // 状态回调可能同步换址/释放；旧失败不能启动新请求的本地回退。
+    if (fallback && !this.destroyed && this.remoteGeneration === generation + 1 &&
+      this.state.phase === 'REMOTE_FAILED') { this.playLocal(); }
   }
 
   private playLocal(): void {

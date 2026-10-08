@@ -28,12 +28,14 @@ class AndroidSoundPlayer(
     private var remotePlaybackRequested = false
     private var remotePlayer: MediaPlayer? = null
     private var localPlayer: MediaPlayer? = null
+    private var remoteGeneration = 0
 
     override fun prepare(remoteUrl: String?) = onMain {
         val nextState = mutableState.value.nextPreparationState(remoteUrl) ?: return@onMain
         releaseRemote()
+        val generation = remoteGeneration
         mutableState.value = nextState
-        if (nextState.phase != SoundPhase.PREPARING) return@onMain
+        if (generation != remoteGeneration || nextState.phase != SoundPhase.PREPARING) return@onMain
         val normalizedUrl = nextState.remoteUrl
         val candidate = MediaPlayer()
         remotePlayer = candidate
@@ -54,13 +56,7 @@ class AndroidSoundPlayer(
             }
             candidate.setOnErrorListener { failed, _, _ ->
                 if (remotePlayer === failed) {
-                    val shouldFallback = remotePlaybackRequested
-                    releaseRemote()
-                    mutableState.value = SoundState(
-                        phase = SoundPhase.REMOTE_FAILED,
-                        remoteUrl = normalizedUrl,
-                    )
-                    if (shouldFallback) playLocal()
+                    failRemote(failed, normalizedUrl, remotePlaybackRequested)
                 }
                 true
             }
@@ -85,8 +81,7 @@ class AndroidSoundPlayer(
                 remote.seekTo(0)
                 remote.start()
             }.onFailure {
-                failRemote(remote, mutableState.value.remoteUrl)
-                playLocal()
+                failRemote(remote, mutableState.value.remoteUrl, fallback = true)
             }
         } else {
             playLocal()
@@ -120,16 +115,21 @@ class AndroidSoundPlayer(
         }
     }
 
-    private fun failRemote(candidate: MediaPlayer, remoteUrl: String) {
+    private fun failRemote(candidate: MediaPlayer, remoteUrl: String, fallback: Boolean = false) {
         if (remotePlayer !== candidate) return
+        val generation = remoteGeneration
         releaseRemote()
         mutableState.value = SoundState(
             phase = SoundPhase.REMOTE_FAILED,
             remoteUrl = remoteUrl,
         )
+        // 同步状态观察者可能换址或关闭，旧失败只能给自己的请求回退。
+        if (fallback && remoteGeneration == generation + 1 &&
+            mutableState.value == SoundState(SoundPhase.REMOTE_FAILED, remoteUrl)) playLocal()
     }
 
     private fun releaseRemote() {
+        remoteGeneration++
         cancelPrepareTimeout()
         remotePlaybackRequested = false
         val player = remotePlayer

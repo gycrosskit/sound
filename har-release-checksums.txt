@@ -1,0 +1,2 @@
+# tag sha256; immutable HAR archives only; Maven is separately versioned.
+har-0.1.2 a8ed9c322e58bae7fb2e92e6b2dde7bba9718f1e04b3630f0620a2a8361f56a0

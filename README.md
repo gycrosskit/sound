@@ -4,17 +4,15 @@
 
 core 提供单短音效播放器、远端HTTPS预缓冲和本地回退；无CMP UI或Swift包装，sound-kuikly仅OHOS Module，A/i由宿主两套UI复用。
 
-适用版本：Maven 0.1.5；HAR 0.1.1。本次修复与平台边界见[功能与平台差异](docs/功能与平台差异.md)，构建与渠道验收见[版本发布记录](https://github.com/gycrosskit/sound/releases/tag/0.1.5)；下方旧版本记录保留其历史范围。
+适用版本：Maven 0.1.5；HAR 0.1.2。本次修复与平台边界见[功能与平台差异](docs/功能与平台差异.md)，构建与渠道验收见[版本发布记录](https://github.com/gycrosskit/sound/releases/tag/0.1.5)。
 
 当前测试覆盖、执行时点和未验收项集中见[验证范围](docs/功能与平台差异.md#验证范围)，复现命令见[开发与验证](docs/开发与验证.md)。
 
-此版本包含已复核的跨端行为修复；[历史源码候选记录](docs/跨端行为候选.md)和下方旧版验收保持其原时点，当前范围见顶部功能与平台差异。
+此版本包含已复核的跨端行为修复；[历史源码候选记录](docs/跨端行为候选.md)和历史发布验收保持其原时点，当前范围见顶部功能与平台差异。
 
 Android、iOS 和 HarmonyOS 的单个短音效播放器，支持 HTTPS 预加载、从头重播、宿主本地资源回退、准备状态和生命周期释放。音频文件、开关和业务事件由宿主提供。
 
-Maven `0.1.3` 已发布并通过 JitPack 全制品校验与 Android/iOS/OHOS 干净消费，修复 iOS Main 线程入口；HAR 源码不变，保持 `0.1.0`。版本、校验值与验证边界见 [0.1.3 远程发布验收](docs/0.1.3远程发布验收.md)。
-
-历史 Maven `0.1.2` 已发布 [prerelease](https://github.com/gycrosskit/sound/releases/tag/0.1.2)，修复 Android Main 线程入口；HAR 保持 `0.1.0`。Release 归档重下载 SHA 与 JitPack 全制品审计通过；精确合并提交、校验值、渠道限制及独立消费状态见 [0.1.2 远程发布验收](docs/0.1.2远程发布验收.md)。
+历史发布验收：[0.1.3](docs/0.1.3远程发布验收.md)、[0.1.2](docs/0.1.2远程发布验收.md)。
 
 ## 架构与调用流程
 
@@ -132,13 +130,13 @@ kotlin {
 }
 ```
 
-HarmonyOS 原生宿主：
+HarmonyOS 原生宿主（HAR 0.1.2 渠道状态见[HAR 发布记录](https://github.com/gycrosskit/sound/releases/tag/har-0.1.2)）：
 
 ```sh
-ohpm install @gycrosskit/sound@0.1.1
+ohpm install @gycrosskit/sound@0.1.2
 ```
 
-插件仓库、Kuikly 依赖及注册见[接入指南](docs/接入指南.md)。Maven `0.1.5` 与 HAR `0.1.1` 分别版本化。
+插件仓库、Kuikly 依赖及注册见[接入指南](docs/接入指南.md)。Maven `0.1.5` 与 HAR `0.1.2` 分别版本化。
 
 ## 快速使用
 
@@ -178,6 +176,8 @@ iOS 使用 `IosSoundPlayer("host_sound", "wav")`，文件放入宿主 Bundle；A
 ## 自动回归
 
 [Component regression](.github/workflows/regression.yml) 按事件分阶段：PR 先判断变更范围，仅源码变更运行已有 Android/Native 测试与编译；纯文档 PR 和 `main` push 只运行轻量脚本/配置检查。手动运行不填版本时执行源码回归，未知路径保守按源码处理。线上执行结果与耗时以实际 Actions 运行为准。
+
+`har-*` Release 仅校验冻结 HAR 摘要、版本/API22 与 tag 中的公开 API/ArkTS/包文档字节，不触发 Maven 消费；OHPM 安装和 DevEco 消费另行验收。
 
 Maven Release 发布或手动填写精确已发布版本时，`verify-public` 统一校验一次冻结归档、精确 tag/commit、完整 publication 清单和公开文件；通过后 Android/Native 独立消费者从 JitPack 解析该版本。PR 不再反复消费旧基线；不使用 `mavenLocal`、本库源码或归档替换远程依赖。此流程不发布二进制。
 

@@ -14,7 +14,6 @@ export class SoundPlayer {
   private local: media.AVPlayer | null = null;
   private remoteGeneration: number = 0;
   private localGeneration: number = 0;
-  private remoteReady: boolean = false;
   private remotePlaying: boolean = false;
   private localResources: resourceManager.ResourceManager | null = null;
   private localTask: Promise<void> = Promise.resolve();
@@ -80,7 +79,6 @@ export class SoundPlayer {
         } catch (_) { this.failRemote(generation); }
       } else if (state === 'prepared') {
         this.clearPrepareTimer();
-        this.remoteReady = true;
         this.updateState('REMOTE_READY', url);
       } else if (state === 'completed') {
         this.remotePlaying = false;
@@ -93,7 +91,7 @@ export class SoundPlayer {
   play(): void {
     if (this.destroyed) { return; }
     const player = this.remote;
-    if (!this.remoteReady || !player) { this.playLocal(); return; }
+    if (this.state.phase !== 'REMOTE_READY' || !player) { this.playLocal(); return; }
     const generation = this.remoteGeneration;
     const playback = ++this.localGeneration;
     this.cancelLocalPreparation?.();
@@ -182,7 +180,6 @@ export class SoundPlayer {
     this.clearPrepareTimer();
     const player = this.remote;
     this.remote = null;
-    this.remoteReady = false;
     this.remotePlaying = false;
     if (player) {
       player.off('stateChange');

@@ -1,5 +1,11 @@
 # 更新记录
 
+## HAR 0.1.2（2026-10-08）
+
+- OHOS 远端就绪判断复用 SoundState.phase，删除重复状态；公开 API 与生命周期合同不变。
+- CI 缓存完整 Native 工具链，增加仅 main 可执行的预热；保留原平台 required checks。
+- Maven 0.1.5 沿用，不重复发布 Android/iOS 制品。
+
 ## 0.1.5（2026-10-08）
 
 - iOS AVPlayer流式远程准备；补A/i/O重入、准备代次与终态释放，保留本地回退。

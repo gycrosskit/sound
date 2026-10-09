@@ -41,8 +41,18 @@ PLIST
 codesign --force --sign - "$app/Frameworks/GYCSound.framework" "$app/Frameworks/OpenKuiklyIOSRender.framework" "$app" >/dev/null
 if [[ -z "$device" ]]; then
   own_device=true
-  runtime=$(xcrun simctl list runtimes -j | python3 -c 'import json,sys; print(next(r["identifier"] for r in json.load(sys.stdin)["runtimes"] if r.get("isAvailable") and r["identifier"].startswith("com.apple.CoreSimulator.SimRuntime.iOS")))')
-  device_type=$(xcrun simctl list devicetypes -j | python3 -c 'import json,sys; print(next(d["identifier"] for d in json.load(sys.stdin)["devicetypes"] if d["name"].startswith("iPhone")))')
+  # Global device types can include iPhones unsupported by the selected runtime.
+  read -r runtime device_type < <(xcrun simctl list runtimes -j | python3 -c '
+import json, sys
+for runtime in json.load(sys.stdin)["runtimes"]:
+    if not runtime.get("isAvailable") or not runtime["identifier"].startswith("com.apple.CoreSimulator.SimRuntime.iOS"):
+        continue
+    for device_type in runtime.get("supportedDeviceTypes", []):
+        if device_type["name"].startswith("iPhone"):
+            print(runtime["identifier"], device_type["identifier"])
+            sys.exit(0)
+sys.exit("No available iOS runtime with a supported iPhone device type")
+')
   device=$(xcrun simctl create GYCModuleLifecycle "$device_type" "$runtime")
   xcrun simctl boot "$device"
   xcrun simctl bootstatus "$device" -b >/dev/null

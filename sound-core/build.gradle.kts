@@ -12,7 +12,10 @@ kotlin {
         }
         commonTest.dependencies { implementation(kotlin("test")) }
         // 执行生产页面桥，transport 替身不实现音效状态机。
-        androidUnitTest { kotlin.srcDir(rootProject.file("sound-kuikly/src/commonMain/kotlin")) }
+        androidUnitTest {
+            kotlin.srcDir(rootProject.file("sound-kuikly/src/commonMain/kotlin"))
+            kotlin.exclude("**/SoundHandler.kt")
+        }
         androidUnitTest.dependencies { implementation("org.robolectric:robolectric:4.16.1") }
         iosTest.dependencies {
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2-1.0.0")

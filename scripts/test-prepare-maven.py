@@ -20,6 +20,10 @@ PUBLICATIONS = {
     "sound-core-iossimulatorarm64": "ios_simulator_arm64",
     "sound-core-ohosarm64": "ohos_arm64",
     "sound-kuikly": None,
+    "sound-kuikly-android": None,
+    "sound-kuikly-iosarm64": "ios_arm64",
+    "sound-kuikly-iosx64": "ios_x64",
+    "sound-kuikly-iossimulatorarm64": "ios_simulator_arm64",
     "sound-kuikly-ohosarm64": "ohos_arm64",
 }
 
@@ -39,7 +43,7 @@ class ArchivePreparation(unittest.TestCase):
             directory.mkdir(parents=True)
             pom = f'''<project xmlns="http://maven.apache.org/POM/4.0.0"><groupId>{GROUP}</groupId><artifactId>{module}</artifactId><version>{VERSION}</version><licenses><license><name>Apache License, Version 2.0</name><url>https://www.apache.org/licenses/LICENSE-2.0.txt</url><distribution>repo</distribution></license></licenses></project>'''
             self.write(directory / f"{module}-{VERSION}.pom", pom.encode())
-            artifact = directory / ("fixture.aar" if module == "sound-core-android" else "fixture.klib")
+            artifact = directory / ("fixture.aar" if module.endswith("-android") else "fixture.klib")
             self.write(artifact, b"fixture")
             variant = {"name": "api", "files": [{"url": artifact.name, "size": artifact.stat().st_size,
                 **{algorithm: hashlib.new(algorithm, artifact.read_bytes()).hexdigest() for algorithm in ("md5", "sha1", "sha256", "sha512")}}]}
@@ -64,11 +68,11 @@ class ArchivePreparation(unittest.TestCase):
     def test_candidate_only_and_historical_bytes_preserved(self):
         result = self.prepare()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("Maven metadata: 8 modules", result.stdout)
+        self.assertIn("Maven metadata: 12 modules", result.stdout)
         self.assertEqual(self.old.read_bytes(), b"historical metadata must stay unchanged")
         with tarfile.open(self.archive) as archive:
             names = archive.getnames()
-            self.assertEqual(sum(name.endswith(".module") for name in names), 8)
+            self.assertEqual(sum(name.endswith(".module") for name in names), 12)
             self.assertFalse(any("/0.1.1/" in name or Path(name).name.startswith("._") for name in names))
             for member in archive.getmembers():
                 if member.name.endswith(".module"):

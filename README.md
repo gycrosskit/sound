@@ -2,9 +2,11 @@
 
 ## 当前功能与平台边界
 
-core 提供单短音效播放器、远端HTTPS预缓冲和本地回退；无CMP UI或Swift包装，sound-kuikly仅OHOS Module，A/i由宿主两套UI复用。
+本版源码提供 Maven / Git Pod `0.1.6`，`GYCSound/Kuikly`。Android/iOS Native Module 接线见[接入指南](docs/接入指南.md#androidios-native-module)。发布及远程消费状态以对应 Release 证据为准。
 
-适用版本：Maven 0.1.5；HAR 0.1.2。本次修复与平台边界见[功能与平台差异](docs/功能与平台差异.md)，构建与渠道验收见[版本发布记录](https://github.com/gycrosskit/sound/releases/tag/0.1.5)。
+core 提供单短音效播放器、远端 HTTPS 预缓冲和本地回退；无 CMP UI。`sound-kuikly` 提供 Android/iOS/OHOS 页面 Module、Android receiver 和可选 iOS Pod receiver，仍复用原生 core 播放器。
+
+历史发布基线：Maven 0.1.5；HAR 0.1.2。本次修复与平台边界见[功能与平台差异](docs/功能与平台差异.md)，构建与渠道验收见[版本发布记录](https://github.com/gycrosskit/sound/releases/tag/0.1.5)。
 
 当前测试覆盖、执行时点和未验收项集中见[验证范围](docs/功能与平台差异.md#验证范围)，复现命令见[开发与验证](docs/开发与验证.md)。
 
@@ -91,7 +93,7 @@ classDiagram
 | 模块 | 平台与要求 |
 | --- | --- |
 | `sound-core` | Android API 24+ / iOS（建议宿主 iOS 14+）；`SoundPlayer` / `SoundState` 和原生实现 |
-| `sound-kuikly` | OHOS Kotlin Module，Kuikly `2.28.0-2.0.21-ohos` |
+| `sound-kuikly` | Android/iOS/OHOS Kotlin Module、Android receiver；Kuikly `2.28.0-2.0.21-ohos` |
 | `@gycrosskit/sound` | HarmonyOS HAR，兼容 API 22；ArkTS 播放器与 Kuikly Renderer Module |
 
 KMP 基线为 OpenHarmony Kotlin `2.2.21-1.0.0` / JDK 17 / Gradle 8.11.1 / AGP 8.10.1，coroutines `1.10.2-1.0.0`、Ktor `3.3.3-1.1.0-04`。iOS 编译/链接需 macOS / Xcode。Core 的 OHOS 变体仅提供公共契约，实际播放需原生 HAR。HAR 使用 API 26 SDK 构建，API 22 真机兼容尚未验收。

@@ -169,7 +169,7 @@ jobs:
         timeout-minutes: 5
       - run: test -f "$ANDROID_HOME/platforms/android-36/android.jar"
         timeout-minutes: 5
-      - run: python3 scripts/ci-run.py --log ci-diagnostics/android-1.log -- bash gradlew --init-script "$PWD/scripts/ci-repositories.gradle" :sound-core:testDebugUnitTest :sound-core:compileDebugKotlinAndroid --no-daemon --max-workers=1 --info --stacktrace
+      - run: python3 scripts/ci-run.py --log ci-diagnostics/android-1.log -- bash gradlew --init-script "$PWD/scripts/ci-repositories.gradle" :sound-core:testDebugUnitTest :sound-core:compileDebugKotlinAndroid :sound-kuikly:testDebugUnitTest :sound-kuikly:compileDebugKotlinAndroid --no-daemon --max-workers=1 --info --stacktrace
         timeout-minutes: 40
       - name: Save public CI diagnostics
         if: always()
@@ -227,7 +227,7 @@ jobs:
             x86_64) native_target=IosX64; native_test=iosX64Test ;;
             *) echo "Unsupported macOS architecture" >&2; exit 1 ;;
           esac
-          python3 scripts/ci-run.py --log ci-diagnostics/native-1.log -- bash gradlew --init-script "$PWD/scripts/ci-repositories.gradle" :sound-core:compileKotlinIosArm64 :sound-core:compileKotlin${native_target} :sound-core:${native_test} :sound-core:compileKotlinOhosArm64 :sound-kuikly:compileKotlinOhosArm64 --no-daemon --max-workers=1 --info --stacktrace
+          python3 scripts/ci-run.py --log ci-diagnostics/native-1.log -- bash gradlew --init-script "$PWD/scripts/ci-repositories.gradle" :sound-core:compileKotlinIosArm64 :sound-core:compileKotlin${native_target} :sound-core:${native_test} :sound-core:compileKotlinOhosArm64 :sound-kuikly:compileKotlinOhosArm64 :sound-kuikly:compileKotlinIosArm64 :sound-kuikly:compileKotlin${native_target} --no-daemon --max-workers=1 --info --stacktrace
           python3 - "sound-core/build/test-results/$native_test" <<'TEST_RESULTS'
           import sys, xml.etree.ElementTree as ET
           from pathlib import Path
@@ -239,6 +239,12 @@ jobs:
           assert all(case.find('failure') is None and case.find('error') is None for case in executed)
           print(f'Native cases: {len(executed)} executed, {len(cases)-len(executed)} skipped')
           TEST_RESULTS
+      - name: Compile native Module Pod with pinned real Kuikly SDK
+        if: needs.changes.outputs.source == 'true'
+        timeout-minutes: 20
+        run: |
+          python3 scripts/ci-run.py --log ci-diagnostics/native-module.log -- bash scripts/ci-build-kuikly-render.sh "$RUNNER_TEMP/sound-native-render" GYCSound/Kuikly
+          python3 scripts/ci-run.py --log ci-diagnostics/native-module-lifecycle.log -- bash scripts/test-ios-module.sh "$RUNNER_TEMP/sound-native-render/Products"
       - name: Warm trusted main Native cache
         if: (github.event_name == 'workflow_dispatch' && inputs.warm_native_cache && github.ref == 'refs/heads/main') && steps.konan-cache.outputs.cache-hit != 'true'
         timeout-minutes: 40
@@ -359,7 +365,19 @@ jobs:
             x86_64) native_target=IosX64; native_test=iosX64Test ;;
             *) echo "Unsupported macOS architecture" >&2; exit 1 ;;
           esac
-          python3 scripts/ci-run.py --log ci-diagnostics/release-native-1.log -- bash gradlew --init-script "$PWD/scripts/ci-repositories.gradle" -p verification-consumer linkDebugFramework${native_target} compileKotlinOhosArm64 -PsoundVersion="$VERSION" --refresh-dependencies --no-daemon --max-workers=1 --info --stacktrace
+          render_args=()
+          case "$VERSION" in
+            0.1.[1-5]) ;;
+            *)
+              render_dir=$(bash scripts/ci-build-kuikly-render.sh "$RUNNER_TEMP/sound-release-render" GYCSound/Kuikly sound "$VERSION")
+              render_args=("-PkuiklyRenderFrameworkDir=$render_dir")
+              ;;
+          esac
+          python3 scripts/ci-run.py --log ci-diagnostics/release-native-1.log -- bash gradlew --init-script "$PWD/scripts/ci-repositories.gradle" -p verification-consumer linkDebugFramework${native_target} compileKotlinOhosArm64 -PsoundVersion="$VERSION" "${render_args[@]}" --refresh-dependencies --no-daemon --max-workers=1 --info --stacktrace
+          if [[ -n "${render_dir:-}" ]]; then
+            case "$(uname -m)" in arm64) framework_target=iosSimulatorArm64 ;; x86_64) framework_target=iosX64 ;; esac
+            python3 scripts/ci-run.py --log ci-diagnostics/release-native-assembly.log -- xcrun swiftc -typecheck -target "$(uname -m)-apple-ios15.0-simulator" -sdk "$(xcrun --sdk iphonesimulator --show-sdk-path)" -F "verification-consumer/build/bin/$framework_target/debugFramework" -F "$render_dir" verification/KuiklyAssembly.swift
+          fi
       - timeout-minutes: 10
         run: |
           case "$(uname -m)" in

@@ -23,5 +23,9 @@ EXTRACT
 python3 scripts/check-maven.py "$staging/maven" com.github.gycrosskit.sound "$VERSION" sound-core,sound-kuikly ios_arm64,ios_x64,ios_simulator_arm64,ohos_arm64
 # 标签必须解析为不可变发布提交；不把当前 PR 的 SHA 当成已发布版本。
 commit="$(git ls-remote https://github.com/gycrosskit/sound.git "refs/tags/$VERSION" "refs/tags/$VERSION^{}" | awk '$2 ~ /\^\{\}$/ {peeled=$1} $2 !~ /\^\{\}$/ {direct=$1} END {print peeled ? peeled : direct}')"
+case "$VERSION" in
+  0.1.1|0.1.2|0.1.3|0.1.4|0.1.5) expected_publications="sound-core,sound-core-android,sound-core-iosarm64,sound-core-iosx64,sound-core-iossimulatorarm64,sound-core-ohosarm64,sound-kuikly,sound-kuikly-ohosarm64" ;;
+  *) expected_publications="sound-core,sound-core-android,sound-core-iosarm64,sound-core-iosx64,sound-core-iossimulatorarm64,sound-core-ohosarm64,sound-kuikly,sound-kuikly-android,sound-kuikly-iosarm64,sound-kuikly-iosx64,sound-kuikly-iossimulatorarm64,sound-kuikly-ohosarm64" ;;
+esac
 python3 scripts/check-public-maven.py --repo sound --version "$VERSION" --commit "$commit" \
-  --expected-publications sound-core,sound-core-android,sound-core-iosarm64,sound-core-iosx64,sound-core-iossimulatorarm64,sound-core-ohosarm64,sound-kuikly,sound-kuikly-ohosarm64 --output-dir "${CI_DIAGNOSTICS_DIR:-ci-diagnostics}/public"
+  --expected-publications "$expected_publications" --output-dir "${CI_DIAGNOSTICS_DIR:-ci-diagnostics}/public"

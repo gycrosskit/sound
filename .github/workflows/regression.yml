@@ -39,22 +39,16 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+      - name: Install shared CI tools
+        uses: gycrosskit/.github/actions/ci-tools@607ff44db144c68fc6523de38c04aac29e427b68
       - id: changes
         timeout-minutes: 5
         run: python3 scripts/ci-run.py --log ci-diagnostics/changes.log -- python3 scripts/ci-changes.py
       - name: Save public CI diagnostics
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: gycrosskit/.github/actions/ci-diagnostics@607ff44db144c68fc6523de38c04aac29e427b68
         with:
-          name: ci-${{ github.workflow }}-changes-${{ github.run_attempt }}
-          path: |
-            ci-diagnostics/**/*.log
-            ci-diagnostics/**/*.json
-            ci-diagnostics/**/*.jsonl
-            ci-diagnostics/**/*.txt
-            **/build/test-results/**/*.xml
-          if-no-files-found: ignore
-          retention-days: 7
+          status: ${{ job.status }}
   verify-har-public:
     if: github.event_name == 'release' && startsWith(github.event.release.tag_name, 'har-')
     runs-on: ubuntu-24.04
@@ -64,6 +58,8 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ github.event.release.tag_name }}
+      - name: Install shared CI tools
+        uses: gycrosskit/.github/actions/ci-tools@607ff44db144c68fc6523de38c04aac29e427b68
       - name: Verify immutable public HAR against tagged source
         env:
           GH_TOKEN: ${{ github.token }}
@@ -72,13 +68,11 @@ jobs:
           mkdir -p ci-diagnostics/har
           gh release download "$HAR_TAG" --pattern SoundNative.har --dir ci-diagnostics/har
           python3 scripts/ci-run.py --log ci-diagnostics/har-public.log -- python3 scripts/ci-har-release.py --archive ci-diagnostics/har/SoundNative.har --tag "$HAR_TAG"
-      - name: Save public HAR diagnostics
+      - name: Save public CI diagnostics
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: gycrosskit/.github/actions/ci-diagnostics@607ff44db144c68fc6523de38c04aac29e427b68
         with:
-          name: ci-har-public-${{ github.run_attempt }}
-          path: ci-diagnostics/**/*.log
-          retention-days: 7
+          status: ${{ job.status }}
   verify-public:
     if: (github.event_name == 'release' && !startsWith(github.event.release.tag_name, 'har-')) || (github.event_name == 'workflow_dispatch' && inputs.version != '')
     runs-on: ubuntu-24.04
@@ -89,22 +83,16 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
+      - name: Install shared CI tools
+        uses: gycrosskit/.github/actions/ci-tools@607ff44db144c68fc6523de38c04aac29e427b68
       - name: Verify immutable archive and public Maven inventory once
         timeout-minutes: 20
         run: python3 scripts/ci-run.py --log ci-diagnostics/verify-public.log -- bash scripts/ci-release.sh
       - name: Save public CI diagnostics
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: gycrosskit/.github/actions/ci-diagnostics@607ff44db144c68fc6523de38c04aac29e427b68
         with:
-          name: ci-${{ github.workflow }}-verify-public-${{ github.run_attempt }}
-          path: |
-            ci-diagnostics/**/*.log
-            ci-diagnostics/**/*.json
-            ci-diagnostics/**/*.jsonl
-            ci-diagnostics/**/*.txt
-            **/build/test-results/**/*.xml
-          if-no-files-found: ignore
-          retention-days: 7
+          status: ${{ job.status }}
   contracts:
     needs: changes
     if: always() && (github.event_name != 'release' && (github.event_name != 'workflow_dispatch' || inputs.version == ''))
@@ -122,6 +110,8 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
+      - name: Install shared CI tools
+        uses: gycrosskit/.github/actions/ci-tools@607ff44db144c68fc6523de38c04aac29e427b68
       - name: Check CI script syntax on main and docs-only changes
         timeout-minutes: 5
         run: |
@@ -140,17 +130,9 @@ jobs:
           SOUND_TYPESCRIPT="$RUNNER_TEMP/ci-tools/node_modules/typescript" python3 scripts/ci-run.py --log ci-diagnostics/contracts-5.log -- node --test verification/ohos-behavior.cjs
       - name: Save public CI diagnostics
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: gycrosskit/.github/actions/ci-diagnostics@607ff44db144c68fc6523de38c04aac29e427b68
         with:
-          name: ci-${{ github.workflow }}-contracts-${{ github.run_attempt }}
-          path: |
-            ci-diagnostics/**/*.log
-            ci-diagnostics/**/*.json
-            ci-diagnostics/**/*.jsonl
-            ci-diagnostics/**/*.txt
-            **/build/test-results/**/*.xml
-          if-no-files-found: ignore
-          retention-days: 7
+          status: ${{ job.status }}
   android:
     needs: changes
     if: needs.changes.outputs.source == 'true'
@@ -160,6 +142,8 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
+      - name: Install shared CI tools
+        uses: gycrosskit/.github/actions/ci-tools@607ff44db144c68fc6523de38c04aac29e427b68
       - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
           distribution: temurin
@@ -173,17 +157,9 @@ jobs:
         timeout-minutes: 40
       - name: Save public CI diagnostics
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: gycrosskit/.github/actions/ci-diagnostics@607ff44db144c68fc6523de38c04aac29e427b68
         with:
-          name: ci-${{ github.workflow }}-android-${{ github.run_attempt }}
-          path: |
-            ci-diagnostics/**/*.log
-            ci-diagnostics/**/*.json
-            ci-diagnostics/**/*.jsonl
-            ci-diagnostics/**/*.txt
-            **/build/test-results/**/*.xml
-          if-no-files-found: ignore
-          retention-days: 7
+          status: ${{ job.status }}
   native:
     needs: changes
     if: (needs.changes.outputs.source == 'true') || (github.event_name == 'workflow_dispatch' && inputs.warm_native_cache && github.ref == 'refs/heads/main')
@@ -193,6 +169,8 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
+      - name: Install shared CI tools
+        uses: gycrosskit/.github/actions/ci-tools@607ff44db144c68fc6523de38c04aac29e427b68
       - name: Identify Native toolchain and Xcode
         if: (needs.changes.outputs.source == 'true') || (github.event_name == 'workflow_dispatch' && inputs.warm_native_cache && github.ref == 'refs/heads/main')
         id: native-key
@@ -263,17 +241,9 @@ jobs:
           key: ${{ steps.konan-cache.outputs.cache-primary-key }}
       - name: Save public CI diagnostics
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: gycrosskit/.github/actions/ci-diagnostics@607ff44db144c68fc6523de38c04aac29e427b68
         with:
-          name: ci-${{ github.workflow }}-native-${{ github.run_attempt }}
-          path: |
-            ci-diagnostics/**/*.log
-            ci-diagnostics/**/*.json
-            ci-diagnostics/**/*.jsonl
-            ci-diagnostics/**/*.txt
-            **/build/test-results/**/*.xml
-          if-no-files-found: ignore
-          retention-days: 7
+          status: ${{ job.status }}
   release-android:
     needs: verify-public
     if: always() && ((github.event_name == 'release' && !startsWith(github.event.release.tag_name, 'har-')) || (github.event_name == 'workflow_dispatch' && inputs.version != ''))
@@ -293,6 +263,8 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
+      - name: Install shared CI tools
+        uses: gycrosskit/.github/actions/ci-tools@607ff44db144c68fc6523de38c04aac29e427b68
       - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
           distribution: temurin
@@ -306,17 +278,9 @@ jobs:
         timeout-minutes: 40
       - name: Save public CI diagnostics
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: gycrosskit/.github/actions/ci-diagnostics@607ff44db144c68fc6523de38c04aac29e427b68
         with:
-          name: ci-${{ github.workflow }}-release-android-${{ github.run_attempt }}
-          path: |
-            ci-diagnostics/**/*.log
-            ci-diagnostics/**/*.json
-            ci-diagnostics/**/*.jsonl
-            ci-diagnostics/**/*.txt
-            **/build/test-results/**/*.xml
-          if-no-files-found: ignore
-          retention-days: 7
+          status: ${{ job.status }}
   release-native:
     needs: verify-public
     if: always() && ((github.event_name == 'release' && !startsWith(github.event.release.tag_name, 'har-')) || (github.event_name == 'workflow_dispatch' && inputs.version != ''))
@@ -336,6 +300,8 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
+      - name: Install shared CI tools
+        uses: gycrosskit/.github/actions/ci-tools@607ff44db144c68fc6523de38c04aac29e427b68
       - name: Identify Native toolchain and Xcode
         id: native-key
         run: python3 scripts/ci-native-cache.py --key >> "$GITHUB_OUTPUT"
@@ -400,14 +366,6 @@ jobs:
           key: ${{ steps.konan-cache.outputs.cache-primary-key }}
       - name: Save public CI diagnostics
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: gycrosskit/.github/actions/ci-diagnostics@607ff44db144c68fc6523de38c04aac29e427b68
         with:
-          name: ci-${{ github.workflow }}-release-native-${{ github.run_attempt }}
-          path: |
-            ci-diagnostics/**/*.log
-            ci-diagnostics/**/*.json
-            ci-diagnostics/**/*.jsonl
-            ci-diagnostics/**/*.txt
-            **/build/test-results/**/*.xml
-          if-no-files-found: ignore
-          retention-days: 7
+          status: ${{ job.status }}

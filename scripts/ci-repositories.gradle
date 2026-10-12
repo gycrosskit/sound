@@ -1,3 +1,14 @@
+// 源码 CI 复用编译结果，但行为测试必须重新执行，不能用缓存 XML 代替本轮验证。
+if (System.getenv('GYC_CI_BUILD_CACHE') == 'true') {
+    gradle.startParameter.buildCacheEnabled = true
+    gradle.beforeProject { project ->
+        project.tasks.withType(org.gradle.api.tasks.testing.AbstractTestTask).configureEach {
+            outputs.upToDateWhen { false }
+            outputs.doNotCacheIf('CI must execute behavior tests') { true }
+        }
+    }
+}
+
 // 定制 Kotlin 保留 Eazytec；标准 AGP/AAPT 从官方解析，避免镜像 POM 存在但 classifier 缺失。
 // 国内 Aliyun 镜像 502 会使 Gradle 禁用仓库，因此仅在 CI 中移除。
 gradle.settingsEvaluated { settings ->

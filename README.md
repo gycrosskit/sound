@@ -1,5 +1,7 @@
 # GY CrossKit Sound
 
+当前开发分支的 Kuikly 与宿主统一：KMP 使用 `2.29.1-2.0.21-ohos`，iOS/OHOS Renderer 使用 `2.29.1`。以后随宿主同步升级；本次调整尚未发布，旧版本的接入与验收记录以对应 tag 为准。
+
 ## 当前功能与平台边界
 
 本版源码提供 Maven / Git Pod `0.1.6`，`GYCSound/Kuikly`。Android/iOS Native Module 接线见[接入指南](docs/接入指南.md#androidios-native-module)。发布及远程消费状态以对应 Release 证据为准。

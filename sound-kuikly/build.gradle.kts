@@ -5,10 +5,10 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":sound-core"))
-            api("com.tencent.kuikly-open:core:2.28.0-2.0.21-ohos")
+            api("com.tencent.kuikly-open:core:2.29.1-2.0.21-ohos")
         }
         androidMain.dependencies {
-            api("com.tencent.kuikly-open:core-render-android:2.28.0-2.0.21-ohos")
+            api("com.tencent.kuikly-open:core-render-android:2.29.1-2.0.21-ohos")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2-1.0.0")
         }
         commonTest.dependencies {

@@ -1,5 +1,9 @@
 # 更新记录
 
+## Unreleased
+
+- Kuikly KMP 与宿主统一为 `2.29.1-2.0.21-ohos`，配套 iOS/OHOS Renderer 固定 `2.29.1`；同步配置与锁文件，后续随宿主升级。尚未发布，完整 SDK 与消费验证分别记录。
+
 ## HAR 0.1.2（2026-10-08）
 
 - OHOS 远端就绪判断复用 SoundState.phase，删除重复状态；公开 API 与生命周期合同不变。

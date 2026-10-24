@@ -10,6 +10,6 @@ Pod::Spec.new do |spec|
   spec.swift_version = '5.9'
   spec.subspec 'Kuikly' do |kuikly|
     kuikly.source_files = 'ios/Sources/GYCSoundKuikly/**/*.swift'
-    kuikly.dependency 'OpenKuiklyIOSRender', '2.28.0'
+    kuikly.dependency 'OpenKuiklyIOSRender', '2.29.1'
   end
 end

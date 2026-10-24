@@ -1,8 +1,12 @@
 # GY CrossKit Sound
 
+> 当前源码候选统一为 **1.0.0**：Maven（core/Kuikly）、iOS Pod 与 OHPM 使用同版；尚未发布，示例坐标须待发布后远程消费。本地验证使用显式源码/本地 HAR，Kuikly 基线为 2.29.1，真机与新版本远程消费另验。
+
+当前源码为未发布的 Kuikly 2.29.1 配套候选；带发布标签的说明保留历史范围。新增 API 必须消费配套源码，不能用旧远程版本验证代替。
+
 ## 当前功能与平台边界
 
-本版源码提供 Maven / Git Pod `0.1.6`，`GYCSound/Kuikly`。Android/iOS Native Module 接线见[接入指南](docs/接入指南.md#androidios-native-module)。发布及远程消费状态以对应 Release 证据为准。
+本版源码提供 Maven / Git Pod `1.0.0`，`GYCSound/Kuikly`。Android/iOS Native Module 接线见[接入指南](docs/接入指南.md#androidios-native-module)。发布及远程消费状态以对应 Release 证据为准。
 
 core 提供单短音效播放器、远端 HTTPS 预缓冲和本地回退；无 CMP UI。`sound-kuikly` 提供 Android/iOS/OHOS 页面 Module、Android receiver 和可选 iOS Pod receiver，仍复用原生 core 播放器。
 
@@ -93,7 +97,7 @@ classDiagram
 | 模块 | 平台与要求 |
 | --- | --- |
 | `sound-core` | Android API 24+ / iOS（建议宿主 iOS 14+）；`SoundPlayer` / `SoundState` 和原生实现 |
-| `sound-kuikly` | Android/iOS/OHOS Kotlin Module、Android receiver；Kuikly `2.28.0-2.0.21-ohos` |
+| `sound-kuikly` | Android/iOS/OHOS Kotlin Module、Android receiver；Kuikly `2.29.1-2.0.21-ohos` |
 | `@gycrosskit/sound` | HarmonyOS HAR，兼容 API 22；ArkTS 播放器与 Kuikly Renderer Module |
 
 KMP 基线为 OpenHarmony Kotlin `2.2.21-1.0.0` / JDK 17 / Gradle 8.11.1 / AGP 8.10.1，coroutines `1.10.2-1.0.0`、Ktor `3.3.3-1.1.0-04`。iOS 编译/链接需 macOS / Xcode。Core 的 OHOS 变体仅提供公共契约，实际播放需原生 HAR。HAR 使用 API 26 SDK 构建，API 22 真机兼容尚未验收。
@@ -126,7 +130,7 @@ dependencyResolutionManagement {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("com.github.gycrosskit.sound:sound-core:0.1.5")
+            implementation("com.github.gycrosskit.sound:sound-core:1.0.0")
         }
     }
 }
@@ -135,10 +139,10 @@ kotlin {
 HarmonyOS 原生宿主（HAR 0.1.2 渠道状态见[HAR 发布记录](https://github.com/gycrosskit/sound/releases/tag/har-0.1.2)）：
 
 ```sh
-ohpm install @gycrosskit/sound@0.1.2
+ohpm install @gycrosskit/sound@1.0.0
 ```
 
-插件仓库、Kuikly 依赖及注册见[接入指南](docs/接入指南.md)。Maven `0.1.5` 与 HAR `0.1.2` 分别版本化。
+插件仓库、Kuikly 依赖及注册见[接入指南](docs/接入指南.md)。Maven `0.1.5` 与 HAR `1.0.0` 分别版本化。
 
 ## 快速使用
 

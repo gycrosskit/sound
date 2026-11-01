@@ -2,13 +2,13 @@
 
 Kuikly 由宿主统一选择版本；组件构建基线、允许范围及消费验证边界见[功能与平台差异](docs/功能与平台差异.md#kuikly-版本与宿主选择)。
 
-> 当前源码候选统一为 **1.0.0**：Maven（core/Kuikly）、iOS Pod 与 OHPM 使用同版；尚未发布，示例坐标须待发布后远程消费。本地验证使用显式源码/本地 HAR，Kuikly 基线为 2.29.1，真机与新版本远程消费另验。
+> iOS Git Pod `1.0.1`（`native-1.0.1`），HAR/OHPM `1.0.1`（`har-1.0.1`）；Maven 保留 `1.0.0`。发布与精确消费状态见对应 Release；旧 Tag、归档及摘要不变。
 
-当前源码为未发布的 Kuikly 2.29.1 配套候选；带发布标签的说明保留历史范围。新增 API 必须消费配套源码，不能用旧远程版本验证代替。
+组件构建最低基线为 Kuikly 2.29.1；允许范围、宿主选择及 2.30 消费边界见[功能与平台差异](docs/功能与平台差异.md#kuikly-版本与宿主选择)。带日期的历史结果不代替当前渠道验收。
 
 ## 当前功能与平台边界
 
-本版源码提供 Maven / Git Pod `1.0.0`，`GYCSound/Kuikly`。Android/iOS Native Module 接线见[接入指南](docs/接入指南.md#androidios-native-module)。发布及远程消费状态以对应 Release 证据为准。
+本版 Maven 保持 `1.0.0`，Git Pod 为 `1.0.1`（`native-1.0.1`），`GYCSound/Kuikly`。Android/iOS Native Module 接线见[接入指南](docs/接入指南.md#androidios-native-module)。发布及远程消费状态以对应 Release 证据为准。
 
 core 提供单短音效播放器、远端 HTTPS 预缓冲和本地回退；无 CMP UI。`sound-kuikly` 提供 Android/iOS/OHOS 页面 Module、Android receiver 和可选 iOS Pod receiver，仍复用原生 core 播放器。
 
@@ -141,10 +141,10 @@ kotlin {
 HarmonyOS 原生宿主（HAR 0.1.2 渠道状态见[HAR 发布记录](https://github.com/gycrosskit/sound/releases/tag/har-0.1.2)）：
 
 ```sh
-ohpm install @gycrosskit/sound@1.0.0
+ohpm install @gycrosskit/sound@1.0.1
 ```
 
-插件仓库、Kuikly 依赖及注册见[接入指南](docs/接入指南.md)。Maven `0.1.5` 与 HAR `1.0.0` 分别版本化。
+插件仓库、Kuikly 依赖及注册见[接入指南](docs/接入指南.md)。Maven `1.0.0` 与 HAR `1.0.1` 分别版本化。
 
 ## 快速使用
 

@@ -1,5 +1,6 @@
 package io.github.gycrosskit.sound
 
+import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.Looper
 import org.junit.runner.RunWith
@@ -47,9 +48,12 @@ class AndroidSoundPlayerTest {
         val media = shadowOf(created.single())
         assertSame(Looper.getMainLooper(), media.handler.looper)
         media.invokePreparedListener()
+        media.seekDelay = -1
         background { player.play() }
         assertEquals(ShadowMediaPlayer.State.PREPARED, media.state)
         shadowOf(Looper.getMainLooper()).idle()
+        assertEquals(ShadowMediaPlayer.State.PREPARED, media.state)
+        media.invokeSeekCompleteListener()
         assertEquals(ShadowMediaPlayer.State.STARTED, media.state)
         background { player.release() }
         assertEquals(SoundPhase.REMOTE_READY, player.state.value.phase)
@@ -62,7 +66,10 @@ class AndroidSoundPlayerTest {
         assertEquals(SoundPhase.PREPARING, mainPlayer.state.value.phase)
         val mainMedia = shadowOf(created.last())
         mainMedia.invokePreparedListener()
+        mainMedia.seekDelay = -1
         mainPlayer.play()
+        assertEquals(ShadowMediaPlayer.State.PREPARED, mainMedia.state)
+        mainMedia.invokeSeekCompleteListener()
         assertEquals(ShadowMediaPlayer.State.STARTED, mainMedia.state)
         mainPlayer.release()
         assertEquals(ShadowMediaPlayer.State.END, mainMedia.state)
@@ -96,8 +103,67 @@ class AndroidSoundPlayerTest {
         assertEquals(SoundPhase.RELEASED, closingPlayer.state.value.phase)
     }
 
+    @Test fun attributesApplyToRemoteAndLocalPlayers() {
+        val context = RuntimeEnvironment.getApplication()
+        val localUrl = "android.resource://${context.packageName}/1"
+        ShadowMediaPlayer.addMediaInfo(DataSource.toDataSource(localUrl), ShadowMediaPlayer.MediaInfo(60_000, -1))
+        val created = recordPlayers()
+        val custom = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION).build()
+        for (attributes in listOf(null, custom)) {
+            val player = if (attributes == null) AndroidSoundPlayer(context, 1) else AndroidSoundPlayer(context, 1, attributes)
+            player.play()
+            val local = shadowOf(created.last())
+            player.prepare(URL)
+            val remote = shadowOf(created.last())
+            val usage = attributes?.usage ?: AudioAttributes.USAGE_MEDIA
+            assertEquals(usage, local.audioAttributes.usage)
+            assertEquals(usage, remote.audioAttributes.usage)
+            assertEquals(local.audioAttributes, remote.audioAttributes)
+            player.release()
+        }
+    }
+
+    @Test fun repeatedPlayWaitsForLatestSeekAndStaleCallbacksCannotRestart() {
+        val created = recordPlayers()
+        val player = AndroidSoundPlayer(RuntimeEnvironment.getApplication(), 1)
+        player.prepare(URL)
+        val original = created.last()
+        val media = shadowOf(original)
+        media.invokePreparedListener()
+        media.seekDelay = -1
+        player.play()
+        val oldCallback = seekListener(media)
+        player.play()
+        oldCallback.onSeekComplete(original)
+        assertEquals(ShadowMediaPlayer.State.PREPARED, media.state)
+        media.invokeSeekCompleteListener()
+        assertEquals(ShadowMediaPlayer.State.STARTED, media.state)
+        player.play()
+        assertEquals(ShadowMediaPlayer.State.PAUSED, media.state)
+        val replacedCallback = seekListener(media)
+        player.prepare("https://example.test/new.wav")
+        replacedCallback.onSeekComplete(original)
+        assertEquals(ShadowMediaPlayer.State.END, media.state)
+        val replacement = created.last()
+        val replacementMedia = shadowOf(replacement)
+        replacementMedia.invokePreparedListener()
+        replacementMedia.seekDelay = -1
+        player.play()
+        val releasedCallback = seekListener(replacementMedia)
+        player.release()
+        releasedCallback.onSeekComplete(replacement)
+        assertEquals(ShadowMediaPlayer.State.END, replacementMedia.state)
+    }
+
+    private fun seekListener(media: ShadowMediaPlayer): MediaPlayer.OnSeekCompleteListener =
+        ShadowMediaPlayer::class.java.getDeclaredField("seekCompleteListener").let {
+            it.isAccessible = true
+            it.get(media) as MediaPlayer.OnSeekCompleteListener
+        }
+
     private fun recordPlayers(): MutableList<MediaPlayer> {
         ShadowMediaPlayer.addMediaInfo(DataSource.toDataSource(URL), ShadowMediaPlayer.MediaInfo(60_000, -1))
+        ShadowMediaPlayer.addMediaInfo(DataSource.toDataSource("https://example.test/new.wav"), ShadowMediaPlayer.MediaInfo(60_000, -1))
         val created = mutableListOf<MediaPlayer>()
         ShadowMediaPlayer.setCreateListener { player, _ ->
             assertSame(Looper.getMainLooper(), Looper.myLooper(), "必须在 Main 创建实际 MediaPlayer")

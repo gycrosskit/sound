@@ -8,15 +8,19 @@ const source = fs.readFileSync(path.join(__dirname, '../ohos/sound-native/src/ma
 const pending = [], timers = new Map();
 let timerId = 0;
 class Player {
-  handlers = new Map(); released = false; plays = 0; seeks = [];
+  handlers = new Map(); released = false; plays = 0; seeks = []; state = 'idle';
   on(name, callback) { this.handlers.set(name, callback); }
   off(name) { this.handlers.delete(name); }
-  emit(name, value) { this.handlers.get(name)?.(value); }
+  emit(name, value) { if (name === 'stateChange') this.state = value; this.handlers.get(name)?.(value); }
   set url(value) { this.remoteUrl = value; this.emit('stateChange', 'initialized'); }
   set fdSrc(value) { this.descriptor = value; this.emit('stateChange', 'initialized'); }
   async prepare() { this.emit('stateChange', 'prepared'); }
-  seek(value) { this.seeks.push(value); }
-  async play() { this.plays++; }
+  seek(value) { this.seeks.push(value); queueMicrotask(() => this.emit('seekDone', value)); }
+  async pause() { assert.equal(this.state, 'playing'); this.emit('stateChange', 'paused'); }
+  async play() {
+    assert.ok(['prepared', 'paused', 'completed'].includes(this.state), `play is invalid in ${this.state}`);
+    this.plays++; this.emit('stateChange', 'playing');
+  }
   async release() { this.released = true; }
 }
 const moduleExport = {};
@@ -40,6 +44,7 @@ vm.runInNewContext(ts.transpileModule(rendererSource, { compilerOptions: { modul
   exports: rendererExport,
   require(name) {
     if (name === './SoundPlayer') return moduleExport;
+    if (name === '@kit.AudioKit') return { audio: { StreamUsage: { STREAM_USAGE_GAME: 1 } } };
     if (name === '@kuikly-open/render') return { KuiklyRenderBaseModule: class {
       onDestroy() { this.baseDestroyed = true; }
     } };
@@ -47,12 +52,14 @@ vm.runInNewContext(ts.transpileModule(rendererSource, { compilerOptions: { modul
   },
 });
 const { SoundModule } = rendererExport;
-const settle = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
+const settle = async () => { for (let i = 0; i < 24; i++) await Promise.resolve(); };
 const nextPlayer = async (player = new Player()) => { assert.ok(pending.length); pending.shift()(player); await settle(); return player; };
 (async () => {
   const opened = [], closed = [], states = [];
   const resources = { getRawFdSync(name) { opened.push(name); return { fd: 10, offset: 0, length: 12 }; }, closeRawFdSync(name) { closed.push(name); } };
-  const sound = new SoundPlayer(resources, 'host.wav', state => states.push(state.phase));
+  const rendererInfo = { usage: 2, rendererFlags: 0, volumeMode: 1, content: 3 };
+  const sound = new SoundPlayer(resources, 'host.wav', state => states.push(state.phase), rendererInfo);
+  rendererInfo.usage = 9; rendererInfo.volumeMode = 9; rendererInfo.content = 9;
   for (const invalid of ['http://example.test/a.wav', 'https:///a.wav', 'https://:123/a.wav', 'https://user:pass@example.test/a.wav', 'https://example.test/a b.wav']) {
     sound.prepare(invalid);
     assert.equal(sound.getState().phase, 'REMOTE_FAILED');
@@ -64,6 +71,8 @@ const nextPlayer = async (player = new Player()) => { assert.ok(pending.length);
   assert.equal(old.released, true);
   assert.equal(sound.getState().phase, 'PREPARING');
   const remote = await nextPlayer();
+  assert.equal(remote.audioRendererInfo.usage, 2);
+  assert.equal(remote.audioRendererInfo.volumeMode, 1); assert.equal(remote.audioRendererInfo.content, 3);
   assert.equal(sound.getState().phase, 'REMOTE_READY');
   sound.prepare('https://example.test/new.wav');
   assert.equal(pending.length, 0);
@@ -76,6 +85,8 @@ const nextPlayer = async (player = new Player()) => { assert.ok(pending.length);
   assert.equal(remote.released, true);
   assert.equal(sound.getState().phase, 'REMOTE_FAILED');
   const local = await nextPlayer();
+  assert.equal(local.audioRendererInfo.usage, 2);
+  assert.equal(local.audioRendererInfo.volumeMode, 1); assert.equal(local.audioRendererInfo.content, 3);
   assert.equal(local.plays, 1);
   assert.deepEqual(opened, ['host.wav']);
   local.emit('stateChange', 'completed');
@@ -92,6 +103,26 @@ const nextPlayer = async (player = new Player()) => { assert.ok(pending.length);
   assert.equal(timers.size, 0);
   sound.prepare('https://example.test/after-release.wav'); sound.play();
   assert.equal(pending.length, 0);
+  // seek 未完成不能起播；后继请求串行等待，release 让旧 seekDone 永久失效。
+  class DeferredSeekPlayer extends Player { seek(value) { this.seeks.push(value); } }
+  const seeking = new SoundPlayer(resources, 'seek.wav');
+  seeking.prepare('https://example.test/seek.wav');
+  const deferred = await nextPlayer(new DeferredSeekPlayer());
+  seeking.play(); await settle();
+  assert.equal(deferred.plays, 0);
+  seeking.play(); await settle();
+  assert.equal(deferred.seeks.length, 1);
+  deferred.emit('seekDone', 0); await settle();
+  assert.equal(deferred.plays, 0);
+  assert.equal(deferred.seeks.length, 2);
+  deferred.emit('seekDone', 0); await settle();
+  assert.equal(deferred.plays, 1);
+  seeking.play(); await settle();
+  const staleSeek = deferred.handlers.get('seekDone');
+  await seeking.release();
+  staleSeek(0); await settle();
+  assert.equal(deferred.plays, 1);
+  assert.equal(timers.size, 0);
   assert.equal(states.at(-1), 'RELEASED');
   await sound.release();
   const timeout = new SoundPlayer(resources, 'other.wav');
@@ -125,14 +156,24 @@ const nextPlayer = async (player = new Player()) => { assert.ok(pending.length);
   assert.equal(creating.getState().phase, 'RELEASED');
   assert.equal(pending.length, 0);
   // 执行生产 Renderer，销毁与桥 release 都必须屏蔽待创建播放器和旧状态回调。
-  const module = new SoundModule();
+  const moduleInfo = { usage: 2, rendererFlags: 0, volumeMode: 1 };
+  const module = new SoundModule(moduleInfo);
+  moduleInfo.volumeMode = 9;
   module.controller = { getUIAbilityContext: () => ({ resourceManager: resources }) };
   const callbacks = [];
   module.call('prepare', '{', value => callbacks.push(value.status));
   assert.deepEqual(callbacks, ['failed']);
   module.call('prepare', JSON.stringify({ url: 'https://example.test/module.wav', rawfile: 'module.wav' }), value => callbacks.push(value.status));
   const modulePlayer = await nextPlayer();
+  assert.equal(modulePlayer.audioRendererInfo.volumeMode, 1);
   assert.deepEqual(callbacks, ['failed', 'ready']);
+  for (const params of ['42', '[]', 'null', 'true']) {
+    module.call('prepare', params, value => callbacks.push(value.status));
+    assert.equal(modulePlayer.released, false);
+  }
+  module.call('unknown', '{"rawfile":"wrong.wav"}', value => callbacks.push(value.status));
+  assert.equal(callbacks.filter(value => value === 'failed').length, 6);
+  callbacks.splice(2);
   const staleState = modulePlayer.handlers.get('stateChange');
   module.onDestroy(); await settle();
   staleState('prepared');

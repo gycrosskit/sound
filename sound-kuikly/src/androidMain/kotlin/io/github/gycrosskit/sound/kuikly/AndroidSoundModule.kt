@@ -1,5 +1,6 @@
 package io.github.gycrosskit.sound.kuikly
 
+import android.media.AudioAttributes
 import android.os.Handler
 import android.os.Looper
 import com.tencent.kuikly.core.render.android.IKuiklyRenderExport
@@ -8,7 +9,10 @@ import com.tencent.kuikly.core.render.android.export.KuiklyRenderCallback
 import io.github.gycrosskit.sound.AndroidSoundPlayer
 
 /** 宿主传自己的 raw ID；每个 Renderer 拥有播放器，音频会话仍归宿主。 */
-class AndroidSoundModule(private val fallbackSoundResId: Int) : KuiklyRenderBaseModule() {
+class AndroidSoundModule @JvmOverloads constructor(
+    private val fallbackSoundResId: Int,
+    private val audioAttributes: AudioAttributes? = null,
+) : KuiklyRenderBaseModule() {
     init { require(fallbackSoundResId != 0) }
     private val main = Handler(Looper.getMainLooper())
     @Volatile private var destroyed = false
@@ -18,7 +22,10 @@ class AndroidSoundModule(private val fallbackSoundResId: Int) : KuiklyRenderBase
         val action = {
             if (!destroyed) {
                 val current = handler ?: SoundHandler {
-                    context?.let { AndroidSoundPlayer(it, fallbackSoundResId) }
+                    context?.let {
+                        if (audioAttributes == null) AndroidSoundPlayer(it, fallbackSoundResId)
+                        else AndroidSoundPlayer(it, fallbackSoundResId, audioAttributes)
+                    }
                 }.also { handler = it }
                 current.call(method, params.orEmpty()) { result -> if (!destroyed) callback?.invoke(result) }
             }
@@ -35,7 +42,8 @@ class AndroidSoundModule(private val fallbackSoundResId: Int) : KuiklyRenderBase
 }
 
 /** 在宿主既有 registerExternalModule 中注册，不共享 Renderer 播放器实例。 */
-fun IKuiklyRenderExport.registerGycSoundModule(fallbackSoundResId: Int) {
+@JvmOverloads
+fun IKuiklyRenderExport.registerGycSoundModule(fallbackSoundResId: Int, audioAttributes: AudioAttributes? = null) {
     require(fallbackSoundResId != 0)
-    moduleExport(SoundModule.NAME) { AndroidSoundModule(fallbackSoundResId) }
+    moduleExport(SoundModule.NAME) { AndroidSoundModule(fallbackSoundResId, audioAttributes) }
 }

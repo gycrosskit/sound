@@ -1,5 +1,11 @@
 # 更新记录
 
+## 1.0.1（Maven 候选）
+
+- Android 默认改用 MEDIA，支持宿主在创建/注册时注入 AudioAttributes，远端与本地保持一致。
+- Android 重播等待定位完成，保留连续请求、换址和释放的旧回调失效保护。
+- HAR 1.0.2 支持构造期 renderer 配置、修复重播及桥输入校验；iOS 会话继续由宿主管理。
+
 ## Native/HAR 1.0.1
 
 - iOS Git Pod 使用 `native-1.0.1`，HAR/OHPM 使用 `har-1.0.1`；Maven 保留 `1.0.0`，不重发未修改的 KMP 产物。

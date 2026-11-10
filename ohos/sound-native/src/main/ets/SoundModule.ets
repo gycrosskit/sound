@@ -1,5 +1,6 @@
 import { KRAny, KuiklyRenderBaseModule, KuiklyRenderCallback } from '@kuikly-open/render';
 import { SoundPlayer, SoundState } from './SoundPlayer';
+import { audio } from '@kit.AudioKit';
 
 interface SoundParams { url?: string; rawfile?: string; }
 
@@ -10,6 +11,13 @@ export class SoundModule extends KuiklyRenderBaseModule {
   private player: SoundPlayer | null = null;
   private callback: KuiklyRenderCallback | null = null;
   private destroyed: boolean = false;
+  private readonly rendererInfo: audio.AudioRendererInfo;
+
+  constructor(rendererInfo: audio.AudioRendererInfo = { usage: audio.StreamUsage.STREAM_USAGE_GAME, rendererFlags: 0 }) {
+    super();
+    this.rendererInfo = { usage: rendererInfo.usage, rendererFlags: rendererInfo.rendererFlags,
+      content: rendererInfo.content, volumeMode: rendererInfo.volumeMode };
+  }
 
   syncMode(): boolean { return false; }
 
@@ -25,7 +33,9 @@ export class SoundModule extends KuiklyRenderBaseModule {
     let args: SoundParams;
     try { args = JSON.parse(typeof params === 'string' ? params : '{}') as SoundParams; }
     catch (_) { callback?.({ status: 'failed' }); return null; }
-    if (!args || (args.url !== undefined && typeof args.url !== 'string') ||
+    if (!args || typeof args !== 'object' || Array.isArray(args) ||
+      (method !== 'prepare' && method !== 'play') ||
+      (args.url !== undefined && typeof args.url !== 'string') ||
       (args.rawfile !== undefined && typeof args.rawfile !== 'string')) {
       callback?.({ status: 'failed' }); return null;
     }
@@ -37,7 +47,7 @@ export class SoundModule extends KuiklyRenderBaseModule {
       this.player = new SoundPlayer(context.resourceManager, args.rawfile, (state: SoundState) => {
         if (state.phase === 'REMOTE_READY') { this.callback?.({ status: 'ready' }); }
         else if (state.phase === 'REMOTE_FAILED') { this.callback?.({ status: 'failed' }); }
-      });
+      }, this.rendererInfo);
     }
     if (method === 'prepare') { this.callback = callback; this.player.prepare(args.url); }
     else if (method === 'play') { this.player.play(); }

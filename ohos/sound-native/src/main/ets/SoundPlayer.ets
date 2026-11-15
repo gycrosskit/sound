@@ -18,6 +18,7 @@ export class SoundPlayer {
   private localResources: resourceManager.ResourceManager | null = null;
   private localTask: Promise<void> = Promise.resolve();
   private cancelLocalPreparation: (() => void) | null = null;
+  private cancelRemoteSeek: (() => void) | null = null;
   private destroyed: boolean = false;
   private prepareTimer: number = -1;
 
@@ -26,13 +27,17 @@ export class SoundPlayer {
   private readonly resources: resourceManager.ResourceManager;
   private readonly fallbackRawFile: string;
   private readonly onState: (state: SoundState) => void;
+  private readonly rendererInfo: audio.AudioRendererInfo;
 
   /** 页面线程调用；宿主提供非空 rawfile 名称，onState 默认忽略状态，远端准备超时 5000 毫秒。 */
   constructor(resources: resourceManager.ResourceManager, fallbackRawFile: string,
-    onState: (state: SoundState) => void = () => {}) {
+    onState: (state: SoundState) => void = () => {},
+    rendererInfo: audio.AudioRendererInfo = { usage: audio.StreamUsage.STREAM_USAGE_GAME, rendererFlags: 0 }) {
     this.resources = resources;
     this.fallbackRawFile = fallbackRawFile;
     this.onState = onState;
+    this.rendererInfo = { usage: rendererInfo.usage, rendererFlags: rendererInfo.rendererFlags,
+      content: rendererInfo.content, volumeMode: rendererInfo.volumeMode };
     if (fallbackRawFile.trim().length === 0) { throw new Error('A host rawfile is required'); }
   }
 
@@ -74,7 +79,7 @@ export class SoundPlayer {
       if (generation !== this.remoteGeneration || this.destroyed) { return; }
       if (state === 'initialized') {
         try {
-          player.audioRendererInfo = { usage: audio.StreamUsage.STREAM_USAGE_GAME, rendererFlags: 0 };
+          player.audioRendererInfo = this.rendererInfo;
           player.prepare().catch(() => this.failRemote(generation));
         } catch (_) { this.failRemote(generation); }
       } else if (state === 'prepared') {
@@ -100,7 +105,23 @@ export class SoundPlayer {
       await this.releaseLocal();
       if (this.destroyed || generation !== this.remoteGeneration || playback !== this.localGeneration) { return; }
       this.remotePlaying = true;
-      player.seek(0);
+      if (player.state === 'playing') { await player.pause(); }
+      if (this.destroyed || generation !== this.remoteGeneration || playback !== this.localGeneration) { return; }
+      // 串行等待当前 seek，不能让前一次 seekDone 被后一次重播误认领。
+      await new Promise<void>((resolve, reject) => {
+        const finish = (error?: Error): void => {
+          clearTimeout(timeout);
+          player.off('seekDone');
+          if (this.cancelRemoteSeek === cancel) { this.cancelRemoteSeek = null; }
+          if (error) { reject(error); } else { resolve(); }
+        };
+        const cancel = (): void => finish();
+        const timeout = setTimeout(() => finish(new Error('Remote sound seek timeout')), 5000);
+        this.cancelRemoteSeek = cancel;
+        player.on('seekDone', () => finish());
+        try { player.seek(0); } catch (_) { finish(new Error('Remote sound seek failed')); }
+      });
+      if (this.destroyed || generation !== this.remoteGeneration || playback !== this.localGeneration) { return; }
       await player.play();
     }).catch(() => this.failRemote(generation));
   }
@@ -145,7 +166,7 @@ export class SoundPlayer {
         player.on('stateChange', (state: media.AVPlayerState) => {
           if (state === 'initialized') {
             try {
-              player.audioRendererInfo = { usage: audio.StreamUsage.STREAM_USAGE_GAME, rendererFlags: 0 };
+              player.audioRendererInfo = this.rendererInfo;
               player.prepare().catch((error: BusinessError) => { clearTimeout(timeout); reject(error); });
             } catch (error) { clearTimeout(timeout); reject(error); }
           } else if (state === 'prepared') {
@@ -177,6 +198,8 @@ export class SoundPlayer {
 
   private releaseRemote(): void {
     this.remoteGeneration++;
+    this.cancelRemoteSeek?.();
+    this.cancelRemoteSeek = null;
     this.clearPrepareTimer();
     const player = this.remote;
     this.remote = null;

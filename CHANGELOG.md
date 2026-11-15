@@ -1,5 +1,17 @@
 # 更新记录
 
+## 1.0.2（统一版本候选，未发布）
+
+- Maven/Git Pod 补齐至 1.0.2，生产实现分别与已发布 Maven 1.0.1 / native-1.0.1 相同；既有 HAR/OHPM 1.0.2 保留字节与标签，不重发。
+- 回流 main 已发布的音频属性、重播 seek 完成和旧回调隔离实现及回归；Android 默认 MEDIA，OHOS 默认 GAME，宿主仍负责实际配置和音频会话。
+- 新渠道构建、冻结摘要、公开消费与设备行为另验，不将候选说明当作发布结果。
+
+## 1.0.1（Maven 候选）
+
+- Android 默认改用 MEDIA，支持宿主在创建/注册时注入 AudioAttributes，远端与本地保持一致。
+- Android 重播等待定位完成，保留连续请求、换址和释放的旧回调失效保护。
+- HAR 1.0.2 支持构造期 renderer 配置、修复重播及桥输入校验；iOS 会话继续由宿主管理。
+
 ## Native/HAR 1.0.1
 
 - iOS Git Pod 使用 `native-1.0.1`，HAR/OHPM 使用 `har-1.0.1`；Maven 保留 `1.0.0`，不重发未修改的 KMP 产物。

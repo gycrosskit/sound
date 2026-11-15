@@ -2,13 +2,13 @@
 
 Kuikly 由宿主统一选择版本；组件构建基线、允许范围及消费验证边界见[功能与平台差异](docs/功能与平台差异.md#kuikly-版本与宿主选择)。
 
-> iOS Git Pod `1.0.1`（`native-1.0.1`），HAR/OHPM `1.0.1`（`har-1.0.1`）；Maven 保留 `1.0.0`。发布与精确消费状态见对应 Release；旧 Tag、归档及摘要不变。
+> 统一版本候选 `1.0.2`：Maven 与 iOS Git Pod（`native-1.0.2`）待发布；HAR/OHPM 沿用已发布的 `har-1.0.2`，不重新构建或提交。已发布 Maven `1.0.1`、Git Pod `native-1.0.1` 与旧摘要保持不变；新候选构建、公开消费和设备验收分别留证。
 
 组件构建最低基线为 Kuikly 2.29.1；允许范围、宿主选择及 2.30 消费边界见[功能与平台差异](docs/功能与平台差异.md#kuikly-版本与宿主选择)。带日期的历史结果不代替当前渠道验收。
 
 ## 当前功能与平台边界
 
-本版 Maven 保持 `1.0.0`，Git Pod 为 `1.0.1`（`native-1.0.1`），`GYCSound/Kuikly`。Android/iOS Native Module 接线见[接入指南](docs/接入指南.md#androidios-native-module)。发布及远程消费状态以对应 Release 证据为准。
+当前候选 Maven 与 Git Pod 均为 `1.0.2`（`native-1.0.2`），`GYCSound/Kuikly`。Android/iOS Native Module 接线见[接入指南](docs/接入指南.md#androidios-native-module)。发布及远程消费状态以对应 Release 证据为准。
 
 core 提供单短音效播放器、远端 HTTPS 预缓冲和本地回退；无 CMP UI。`sound-kuikly` 提供 Android/iOS/OHOS 页面 Module、Android receiver 和可选 iOS Pod receiver，仍复用原生 core 播放器。
 
@@ -92,8 +92,6 @@ classDiagram
 
 源码入口：[共享契约与 URL 规则](sound-core/src/commonMain/kotlin/io/github/gycrosskit/sound/SoundPlayer.kt)、[Android 播放器](sound-core/src/androidMain/kotlin/io/github/gycrosskit/sound/AndroidSoundPlayer.kt)、[iOS 原生预缓冲与 generation](sound-core/src/iosMain/kotlin/io/github/gycrosskit/sound/IosSoundPlayer.kt)、[Kuikly Kotlin callback](sound-kuikly/src/commonMain/kotlin/io/github/gycrosskit/sound/kuikly/SoundModule.kt)、[OHOS Renderer](ohos/sound-native/src/main/ets/SoundModule.ets)、[OHOS 播放与串行释放](ohos/sound-native/src/main/ets/SoundPlayer.ets)。SoundState 不表示正在播放或本地资源可用；缺失或不可解码的本地资源会结束该次播放。
 
-## 平台和 API
-
 ## 平台与模块
 
 | 模块 | 平台与要求 |
@@ -132,19 +130,19 @@ dependencyResolutionManagement {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("com.github.gycrosskit.sound:sound-core:1.0.0")
+            implementation("com.github.gycrosskit.sound:sound-core:1.0.2")
         }
     }
 }
 ```
 
-HarmonyOS 原生宿主（HAR 0.1.2 渠道状态见[HAR 发布记录](https://github.com/gycrosskit/sound/releases/tag/har-0.1.2)）：
+HarmonyOS 原生宿主使用 HAR `1.0.2`，见[HAR 发布记录](https://github.com/gycrosskit/sound/releases/tag/har-1.0.2)；下方安装命令须以对应 Registry 精确查询结果为准：
 
 ```sh
-ohpm install @gycrosskit/sound@1.0.1
+ohpm install @gycrosskit/sound@1.0.2
 ```
 
-插件仓库、Kuikly 依赖及注册见[接入指南](docs/接入指南.md)。Maven `1.0.0` 与 HAR `1.0.1` 分别版本化。
+插件仓库、Kuikly 依赖及注册见[接入指南](docs/接入指南.md)。本轮仅补齐 Maven/Git Pod `1.0.2`，HAR 沿用既有版本。
 
 ## 快速使用
 

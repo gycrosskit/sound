@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name = 'GYCSound'
-  spec.version = '1.0.1'
+  spec.version = '1.0.2'
   spec.summary = 'GY CrossKit Sound Kuikly iOS native receiver'
   spec.homepage = 'https://github.com/gycrosskit/sound'
   spec.license = { :type => 'Apache-2.0', :file => 'LICENSE' }

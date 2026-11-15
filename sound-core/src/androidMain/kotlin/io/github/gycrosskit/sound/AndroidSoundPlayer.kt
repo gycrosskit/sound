@@ -2,6 +2,7 @@ package io.github.gycrosskit.sound
 
 import android.content.Context
 import android.media.AudioAttributes
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.Handler
 import android.os.Looper
@@ -14,9 +15,13 @@ import kotlinx.coroutines.flow.asStateFlow
  * @param context 仅保留 applicationContext，不持有页面。
  * @param fallbackSoundResId 宿主非零 raw 音效资源；远端 5 秒未就绪时继续本地播放。
  */
-class AndroidSoundPlayer(
+class AndroidSoundPlayer @JvmOverloads constructor(
     context: Context,
     private val fallbackSoundResId: Int,
+    private val audioAttributes: AudioAttributes = AudioAttributes.Builder()
+        .setUsage(AudioAttributes.USAGE_MEDIA)
+        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+        .build(),
 ) : SoundPlayer {
     init { require(fallbackSoundResId != 0) { "A host raw resource is required" } }
     private val appContext = context.applicationContext
@@ -29,6 +34,8 @@ class AndroidSoundPlayer(
     private var remotePlayer: MediaPlayer? = null
     private var localPlayer: MediaPlayer? = null
     private var remoteGeneration = 0
+    private var playGeneration = 0
+    private var seeking = false
 
     override fun prepare(remoteUrl: String?) = onMain {
         val nextState = mutableState.value.nextPreparationState(remoteUrl) ?: return@onMain
@@ -40,7 +47,7 @@ class AndroidSoundPlayer(
         val candidate = MediaPlayer()
         remotePlayer = candidate
         runCatching {
-            candidate.setAudioAttributes(SOUND_ATTRIBUTES)
+            candidate.setAudioAttributes(audioAttributes)
             candidate.setDataSource(normalizedUrl)
             candidate.setOnPreparedListener { prepared ->
                 if (remotePlayer === prepared) {
@@ -78,8 +85,9 @@ class AndroidSoundPlayer(
             localPlayer = null
             runCatching {
                 remotePlaybackRequested = true
-                remote.seekTo(0)
-                remote.start()
+                playGeneration++
+                if (remote.isPlaying) remote.pause()
+                if (!seeking) seekRemote(remote, playGeneration)
             }.onFailure {
                 failRemote(remote, mutableState.value.remoteUrl, fallback = true)
             }
@@ -88,12 +96,25 @@ class AndroidSoundPlayer(
         }
     }
 
+    private fun seekRemote(player: MediaPlayer, generation: Int) {
+        seeking = true
+        player.setOnSeekCompleteListener { completed ->
+            if (remotePlayer !== completed) return@setOnSeekCompleteListener
+            seeking = false
+            runCatching {
+                if (generation != playGeneration) seekRemote(completed, playGeneration)
+                else completed.start()
+            }.onFailure { failRemote(completed, mutableState.value.remoteUrl, fallback = true) }
+        }
+        player.seekTo(0)
+    }
+
     private fun playLocal() {
         if (mutableState.value.phase == SoundPhase.RELEASED) return
         localPlayer?.release()
         localPlayer = null
         runCatching {
-            val player = MediaPlayer.create(appContext, fallbackSoundResId) ?: return
+            val player = MediaPlayer.create(appContext, fallbackSoundResId, audioAttributes, AudioManager.AUDIO_SESSION_ID_GENERATE) ?: return
             localPlayer = player
             player.setOnCompletionListener { completed ->
                 if (localPlayer === completed) {
@@ -130,11 +151,14 @@ class AndroidSoundPlayer(
 
     private fun releaseRemote() {
         remoteGeneration++
+        playGeneration++
+        seeking = false
         cancelPrepareTimeout()
         remotePlaybackRequested = false
         val player = remotePlayer
         remotePlayer = null
         player?.apply {
+            setOnSeekCompleteListener(null)
             setOnPreparedListener(null)
             setOnCompletionListener(null)
             setOnErrorListener(null)
@@ -162,9 +186,5 @@ class AndroidSoundPlayer(
     private companion object {
         const val REMOTE_AUDIO_TIMEOUT_MILLIS = 5_000L
 
-        val SOUND_ATTRIBUTES: AudioAttributes = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-            .build()
     }
 }

@@ -1,8 +1,10 @@
 # GY CrossKit Sound
 
+新版 Maven 发布由 Jenkins 生成同版本归档、`source-receipt.json` 和 `SHA256SUMS`。JitPack 核对标签来源、归档尺寸和摘要后安装同一份制品。历史发布按原版本 Tag 复验。
+
 Kuikly 由宿主统一选择版本；组件构建基线、允许范围及消费验证边界见[功能与平台差异](docs/功能与平台差异.md#kuikly-版本与宿主选择)。
 
-> 统一版本候选 `1.0.2`：Maven 与 iOS Git Pod（`native-1.0.2`）待发布；HAR/OHPM 沿用已发布的 `har-1.0.2`，不重新构建或提交。已发布 Maven `1.0.1`、Git Pod `native-1.0.1` 与旧摘要保持不变；新候选构建、公开消费和设备验收分别留证。
+> 统一版本候选 `1.0.2`：Maven 与 iOS Git Pod（`native-1.0.2`）待发布；私有 OHPM 沿用已发布的 `1.0.2`，不重新构建或提交。已发布 Maven `1.0.1`、Git Pod `native-1.0.1` 与旧摘要保持不变；新候选构建、公开消费和设备验收分别留证。
 
 组件构建最低基线为 Kuikly 2.29.1；允许范围、宿主选择及 2.30 消费边界见[功能与平台差异](docs/功能与平台差异.md#kuikly-版本与宿主选择)。带日期的历史结果不代替当前渠道验收。
 
@@ -136,7 +138,7 @@ kotlin {
 }
 ```
 
-HarmonyOS 原生宿主使用 HAR `1.0.2`，见[HAR 发布记录](https://github.com/gycrosskit/sound/releases/tag/har-1.0.2)；下方安装命令须以对应 Registry 精确查询结果为准：
+HarmonyOS 原生宿主通过私有 OHPM 安装精确版本 `1.0.2`，以对应 Registry 查询和 Jenkins 回执为准：
 
 ```sh
 ohpm install @gycrosskit/sound@1.0.2
@@ -170,7 +172,7 @@ iOS 使用 `IosSoundPlayer("host_sound", "wav")`，文件放入宿主 Bundle；A
 
 - [接入指南](docs/接入指南.md)：资源、Swift 导出、Kuikly、状态及超时边界。
 - [开发与验证](docs/开发与验证.md)、[历史验证记录](VERIFICATION.md)：构建和独立消费范围。
-- [GitHub Releases](https://github.com/gycrosskit/sound/releases)：Maven / HAR 版本和归档。
+- [GitHub Releases](https://github.com/gycrosskit/sound/releases)：Maven 版本和归档。
 - [GitHub Issues](https://github.com/gycrosskit/sound/issues)：提供平台、版本、音频格式和最小复现。
 
 现有记录覆盖远程 Maven / OHPM 产物编译、iOS Simulator 链接、Swift typecheck 和行为替身测试；真机播放、音频会话及 API 22 设备兼容仍待宿主验收。

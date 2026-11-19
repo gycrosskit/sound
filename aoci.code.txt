@@ -1,0 +1,193 @@
+#AOCI-CODE-VOLUME: 1
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/===
+.gitattributes[FV4T]: F:统一文本LF检出以保持AOCI原始摘要跨平台一致 | R:- | A:- | S:二进制保持原字节
+.gitignore[FV4T]: F:排除构建缓存、本机配置及CI下发脚本 | R:- | A:- | S:-
+AGENTS.md[SQ7L]: F:约束短音效准备播放释放的generation归属并定义AOCI认知维护合同 | R:code:sound-core/src/commonMain/kotlin/io/github/gycrosskit/sound/SoundPlayer.kt | A:- | S:旧prepared、seek、timeout和fallback不得复活旧播放或关闭新资源；REMOTE_READY不证明完整下载
+CHANGELOG.md[SV3T]: F:按版本记录原生预缓冲、线程及释放修复和渠道候选边界 | R:- | A:- | S:历史Tag、摘要与原生渠道不因候选声明重发
+GYCSound.podspec[FV6T]: F:定义GYCSound的iOS Kuikly receiver源码与Renderer允许范围 | R:code:ios/Sources/GYCSoundKuikly/GycSoundModule.swift | A:GYCSound/Kuikly | S:native-版本Tag获取源码，最低iOS14，宿主导出既有handler不带第二份runtime
+LICENSE[SS2M]: F:规定组件Apache2许可、分发条件和免责条款 | R:- | A:- | S:-
+README.md[SH7S]: F:提供短音效能力、安装和最小使用入口并链接AOCI与平台合同 | R:code:sound-core/src/commonMain/kotlin/io/github/gycrosskit/sound/SoundPlayer.kt,code:docs/功能与平台差异.md | A:- | S:prepare不自动播放，预缓冲不保证离线缓存；release永久关闭，后台调用以RELEASED确认原生执行
+VERIFICATION.md[SQ3M]: F:保存2026年9月本地编译、替身行为及独立产物消费历史记录 | R:- | A:- | S:仅对应原时点，真实扬声器和业务行为独立验收
+build.gradle.kts[FV6T]: F:固定厂商Kotlin与AGP并统一Maven组、版本和Apache许可 | R:- | A:GROUP,VERSION | S:默认1.0.2为源码候选，环境可覆盖
+gradle.properties[FV3T]: F:配置Gradle堆、UTF8、单worker与AndroidX | R:- | A:- | S:-
+gradlew[XV3M]: F:在Unix解析Java及wrapper路径并透传Gradle参数 | R:code:gradle/wrapper/gradle-wrapper.properties | A:命令行参数 | S:-
+gradlew.bat[XV3T]: F:在Windows查找Java并启动Gradle wrapper | R:code:gradle/wrapper/gradle-wrapper.properties | A:命令行参数 | S:-
+jitpack-install.sh[OV7S]: F:核对不可变Tag来源回执和安全归档摘要再安装同版Maven原件 | R:code:jitpack.yml | A:repository,VERSION,可选目录 | S:校验HEAD及tree、尺寸及hash，拒绝穿越、链接、重复成员和膨胀包
+jitpack.yml[FV5T]: F:使用JDK21运行sound同版Maven原件安装入口 | R:code:jitpack-install.sh | A:JitPack install | S:-
+release-pack.py[OV6T]: F:仅归档指定版本Maven publications并回读metadata JSON | R:code:scripts/prepare-maven.sh | A:repository,output,version | S:无publication拒绝，剔除AppleDouble，不将历史staging版本混入
+settings.gradle.kts[FV7T]: F:统一厂商工具链及依赖仓库并包含core和Kuikly模块 | R:code:build.gradle.kts | A:sound根构建 | S:Kuikly独占完整module来源，Eazytec保留厂商Kotlin及ktor，禁止子项目私加仓库
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/docs/===
+0.1.2远程发布验收.md[SV3M]: F:保存Android Main入口修复及0.1.2不可变发布消费历史证据 | R:- | A:- | S:HAR沿用旧版本，Robolectric不证明设备播放
+0.1.3远程发布验收.md[SV3S]: F:保存iOS Main入口与释放修复、0.1.3公开实物及消费者验收 | R:- | A:- | S:JitPack缺失SHA256/512 sidecar单独记限制，设备音频另验
+功能与平台差异.md[SH7L]: F:集中定义播放器准备重播释放、三端差异和实际验证范围 | R:code:sound-core/src/commonMain/kotlin/io/github/gycrosskit/sound/SoundPlayer.kt | A:- | S:宿主拥有业务开关和全局音频会话；原生资源映射保留，状态由SoundState单一提供
+完整源码审查.md[SQ4M]: F:列出历史全部自有播放实现与公开调用链审查及未验收范围 | R:- | A:- | S:源码及Node替身结果不代算设备、网络或原生构建通过
+开发与验证.md[SQ6M]: F:提供音效生产编译、定向行为回归、打包和原生消费入口 | R:- | A:- | S:日常compile只构建生产目标，测试与独立消费按需另执行
+接入指南.md[SH7M]: F:说明工具链、平台资源映射、SoundModule及Native owner注册接线 | R:- | A:- | S:Maven、Pod、HAR分别安装与验收，handler从宿主已有Shared framework导出
+跨端行为候选.md[SH5T]: F:记录iOS改用AVPlayer网络预缓冲的设计与generation约束 | R:code:sound-core/src/iosMain/kotlin/io/github/gycrosskit/sound/IosSoundPlayer.kt | A:- | S:准备每50ms检查、READY每秒检查item，5秒deadline与notification并存，不新增完整下载缓存
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/gradle/===
+native-toolchain.properties[FV5T]: F:登记厂商Kotlin和iOS/OHOS Native目标集合 | R:- | A:- | S:-
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/gradle/wrapper/===
+gradle-wrapper.properties[FV4T]: F:固定Gradle8.11.1分发与用户缓存位置 | R:- | A:- | S:-
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/ios/Sources/GYCSoundKuikly/===
+GycSoundModule.swift[IH8T]: F:为每Renderer创建宿主音效handler并在Main调用和Context交付 | R:- | A:GycSoundHandler,GycSoundModule.register,hrv_call,invalidate | S:递归锁保护工厂重入失效，失效后新handler立即dispose；dealloc清理只捕获资源，禁止重retain self或同步等待Main
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/ohos/AppScope/===
+app.json5[FV3T]: F:声明HAR工程演示应用包名和历史应用版本 | R:- | A:- | S:应用版本与OHPM包版本分别管理
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/ohos/===
+build-profile.json5[FV5T]: F:绑定SoundNative模块与HarmonyOS产品SDK配置 | R:code:ohos/sound-native/build-profile.json5 | A:default产品 | S:target26.0.0，compatible6.0.2(22)，不能由接口API级别推断更低系统支持
+hvigorfile.ts[FV3T]: F:注册根工程Hvigor appTasks | R:- | A:- | S:-
+oh-package.json5[FV3T]: F:声明Hvigor26根工程依赖容器 | R:- | A:- | S:-
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/ohos/hvigor/===
+hvigor-config.json5[FV3T]: F:固定Hvigor26模型和默认运行配置 | R:- | A:- | S:-
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/ohos/sound-native/===
+CHANGELOG.md[SV3T]: F:按HAR版本记录音频属性、重播seek和输入边界变化 | R:- | A:- | S:Android默认MEDIA与OHOS默认GAME差异保留
+Index.ets[LH6T]: F:导出HAR原生播放器、状态和Kuikly Module | R:code:ohos/sound-native/src/main/ets/SoundPlayer.ets,code:ohos/sound-native/src/main/ets/SoundModule.ets | A:SoundPlayer,SoundState,SoundModule | S:-
+LICENSE[SS2M]: F:携带HAR分发所需Apache2许可文本 | R:- | A:- | S:-
+README.md[SH5T]: F:说明sound HAR精确安装与宿主rawfile职责及候选验收边界 | R:code:ohos/sound-native/src/main/ets/SoundPlayer.ets | A:@gycrosskit/sound@1.0.2 | S:精确Registry安装需另验
+build-profile.json5[FV4T]: F:配置SoundNative为Stage模式HarmonyOS目标 | R:- | A:default目标 | S:-
+hvigorfile.ts[FV3T]: F:注册HAR模块Hvigor harTasks | R:- | A:- | S:-
+oh-package.json5[FV6T]: F:声明sound HAR版本、导出入口和Renderer允许范围 | R:code:ohos/sound-native/Index.ets | A:@gycrosskit/sound@1.0.2 | S:Renderer范围^2.29.1需宿主锁定实际版本
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/ohos/sound-native/src/main/ets/===
+SoundModule.ets[IH8T]: F:按页面拥有SoundPlayer并桥接prepare/play/release和常驻准备回执 | R:code:ohos/sound-native/src/main/ets/SoundPlayer.ets | A:SoundModule.call,onDestroy | S:先校验JSON根、方法与参数类型；首次须宿主rawfile及UIAbility上下文，销毁后关闭回执资格并异步释放
+SoundPlayer.ets[IH9M]: F:以AVPlayer管理HTTPS预缓冲、原点重播、rawfile回退和永久释放 | R:- | A:SoundPlayer.prepare,play,getState,release | S:复制宿主renderer属性，默认GAME；远端与本地generation隔离旧回调，seek串行等待seekDone；rawfile描述符在本地player释放后关闭，release Promise只保证本地队列而非远端异步释放
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/ohos/sound-native/src/main/===
+module.json5[FV4T]: F:声明SoundNative HAR类型与default/tablet设备 | R:- | A:SoundNative | S:-
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/scripts/===
+build.sh[OV7T]: F:按显式平台编译音效生产模块或调用Maven/HAR打包入口 | R:code:scripts/package-maven.sh,code:scripts/ci-build-kuikly-render.sh | A:compile|package --platform | S:iOS额外编译真实Module Pod，Harmony compile继续打HAR；不串联行为回归
+check-maven.py[XQ7M]: F:校验Maven精确变体引用、实物字节、四种hash及sidecar和许可 | R:- | A:repository,group,version,modules_csv,native_targets_csv | S:available-at同名变体须真实存在，可限制JVM字节码major
+check-public-maven.py[XQ7L]: F:只读审计公开JitPack Tag身份、publication清单及实物字节与sidecar | R:- | A:--repo,--version,--commit,--expected-publications | S:要求公开ok不可变Tag和完整SHA，缺失渠道sidecar独立记录，不运行消费工程
+ci-build-kuikly-render.sh[OV6S]: F:从固定Renderer和本地或不可变远程Tag构建真实Simulator Pod | R:code:GYCSound.podspec | A:绝对构建目录,可选Pod及远程来源 | S:严格校验Pod和来源参数，SDK编译与宿主消费分开验收
+ci-java.security[FV3T]: F:设置CI正向DNS缓存十分钟并禁用负缓存 | R:- | A:- | S:-
+ci-release.sh[OV7T]: F:从实际远端Tag解析来源并复验同版归档和公开Maven制品 | R:code:jitpack-install.sh,code:scripts/check-public-maven.py | A:VERSION | S:历史0.1.1至0.1.5验证8个publication，新版验证12个，不用PR HEAD替代发布身份
+ci-repositories.gradle[FV6T]: F:配置编译缓存、行为测试真实执行与CI依赖仓库过滤 | R:- | A:GYC_CI_BUILD_CACHE | S:行为测试禁缓存和up-to-date；Eazytec仅供厂商版本，CI移除不稳定Aliyun源
+jitpack-metadata.py[XV7T]: F:预校验全体metadata后移除不可保留classifier及空资源变体 | R:- | A:normalize,staging路径 | S:非空资源禁止裁剪，先全量验证再改写避免部分状态
+package-maven.sh[OV6T]: F:发布当前版本到全新staging后执行音效候选归档门禁 | R:code:scripts/prepare-maven.sh | A:VERSION和额外Gradle参数 | S:已有staging或归档直接拒绝，防止覆盖候选
+prepare-maven.sh[OV7T]: F:规范当前版本metadata并隔离解包核验完整publication后替换候选归档 | R:code:scripts/jitpack-metadata.py,code:release-pack.py,code:scripts/check-maven.py | A:VERSION | S:只改指定版本，12个publication全部通过才mv最终归档，历史版本字节保留
+test-check-maven.py[TQ6T]: F:用真实文件验证Maven门禁拒绝坏hash、变体、许可及可选publication | R:code:scripts/check-maven.py | A:PublicationGate | S:消费编译不能替代完整实物门禁
+test-ios-module.sh[XQ7T]: F:链接真实Pod并在Simulator运行receiver析构与失效生命周期检查 | R:code:verification/KuiklyLifecycle.swift | A:绝对Products目录,可选设备 | S:无指定设备时创建并清理自有Simulator；复用设备只卸载测试App，日志须KUIKLY_MODULE_LIFECYCLE_PASS
+test-jitpack-metadata.py[TQ5T]: F:用真实ZIP和metadata验证变体裁剪、sidecar更新及失败原子性 | R:code:scripts/jitpack-metadata.py | A:PublicationContracts | S:-
+test-prepare-maven.py[TQ6T]: F:验证仅改候选版本且坏publication不能替换已验证归档 | R:code:scripts/prepare-maven.sh | A:归档编排unittest | S:保持历史staging字节，缺许可或publication须失败
+verify-har.sh[XQ6T]: F:将已构建SoundNative HAR安装到独立消费者并执行真实HAR编译 | R:code:verification-har/oh-package.json5 | A:SOUND_DEVECO_HOME | S:只证明本地HAR消费，要求候选HAR已存在
+verify.sh[XQ7T]: F:串联音效定向测试、Maven门禁、真实Pod和独立消费者与Swift类型检查 | R:code:scripts/prepare-maven.sh,code:scripts/test-ios-module.sh | A:仓库根验证入口 | S:仅按需要显式执行，源码和本地消费不能代算远程发布或设备播放
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/sound-core/===
+build.gradle.kts[FV6T]: F:配置播放器多平台变体、URL解析和协程依赖及定向平台回归 | R:- | A:sound-core | S:Android单测直接编译生产SoundModule，transport替身不实现音效状态机；JVM11
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/sound-core/src/androidMain/===
+AndroidManifest.xml[FI4T]: F:为远端音效播放声明Android网络访问权限 | R:- | A:android.permission.INTERNET | S:-
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/sound-core/src/androidMain/kotlin/io/github/gycrosskit/sound/===
+AndroidSoundPlayer.kt[IH9S]: F:在Main用MediaPlayer进行HTTPS预缓冲、重播seek、本地raw回退和永久释放 | R:code:sound-core/src/commonMain/kotlin/io/github/gycrosskit/sound/SoundPlayer.kt | A:AndroidSoundPlayer.prepare,play,release | S:默认MEDIA且宿主可注入AudioAttributes；对象身份和generation拒绝旧回调，重播等seek完成；同步状态观察者换址或release后旧失败不得回退，后台release需观察RELEASED
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/sound-core/src/androidUnitTest/kotlin/com/tencent/kuikly/core/module/===
+Module.kt[TQ4T]: F:截获原生调用和存活callback供真实SoundModule行为回归 | R:- | A:Module,CallbackRef | S:仅替代传输，代次和关闭逻辑来自生产代码
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/sound-core/src/androidUnitTest/kotlin/com/tencent/kuikly/core/nvi/serialization/json/===
+JSONObject.kt[TQ3T]: F:提供SoundModule测试所需JSON字段最小占位 | R:- | A:JSONObject | S:不证明SDK真实序列化
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/sound-core/src/androidUnitTest/kotlin/io/github/gycrosskit/sound/===
+AndroidSoundPlayerTest.kt[TH6S]: F:验证Main入口、准备超时、状态重入、音频属性和重播seek旧回调隔离 | R:code:sound-core/src/androidMain/kotlin/io/github/gycrosskit/sound/AndroidSoundPlayer.kt | A:AndroidSoundPlayerTest | S:Robolectric播放器替身，不证明设备音频输出
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/sound-core/src/androidUnitTest/kotlin/io/github/gycrosskit/sound/kuikly/===
+SoundModuleTest.kt[TH6T]: F:验证生产页面桥准备重入释放、替换旧回执、常驻callback撤销和失败重试 | R:code:sound-kuikly/src/commonMain/kotlin/io/github/gycrosskit/sound/kuikly/SoundModule.kt | A:SoundModuleTest | S:传输替身不提供状态机
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/sound-core/src/commonMain/kotlin/io/github/gycrosskit/sound/===
+SoundPlayer.kt[LH9T]: F:定义播放器状态与准备播放释放合同、HTTPS URL准入和准备去重规则 | R:- | A:SoundPlayer,SoundPhase,SoundState,normalizeSoundUrl,nextPreparationState | S:RELEASED永久终态；无凭据HTTPS且禁内嵌空白，失败同址可重试；REMOTE_READY只表示可起播，状态URL含业务参数须避免日志泄露
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/sound-core/src/commonTest/kotlin/io/github/gycrosskit/sound/===
+SoundPlayerTest.kt[TH5T]: F:验证URL准入、空地址、本地恢复、同址去重、失败重试和释放终态 | R:code:sound-core/src/commonMain/kotlin/io/github/gycrosskit/sound/SoundPlayer.kt | A:SoundPlayerTest | S:-
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/sound-core/src/iosMain/kotlin/io/github/gycrosskit/sound/===
+IosSoundPlayer.kt[IH9S]: F:在Main以AVPlayer预缓冲远端并通过AVAudioPlayer播放Bundle回退 | R:code:sound-core/src/commonMain/kotlin/io/github/gycrosskit/sound/SoundPlayer.kt | A:IosSoundPlayer.prepare,play,release | S:prepare每50ms检查至5秒，READY每秒补查失败且监听notification；请求和播放generation隔离seek与重入，入口调度独立预载scope以保证取消后仍能释放，音频会话归宿主
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/sound-core/src/iosTest/kotlin/io/github/gycrosskit/sound/===
+IosSoundPlayerTest.kt[TH6M]: F:执行生产iOS播放器验证失败回退、旧item、五秒期限和Main排队释放 | R:code:sound-core/src/iosMain/kotlin/io/github/gycrosskit/sound/IosSoundPlayer.kt | A:IosSoundPlayerTest | S:使用受控item状态与虚拟时钟，不证明网络预缓冲或真实扬声器
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/sound-kuikly/===
+build.gradle.kts[FV6T]: F:配置Kuikly页面桥、Android receiver多平台依赖和回归与staging | R:code:sound-core/build.gradle.kts | A:sound-kuikly | S:公开传递core和Kuikly，Android JVM11
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/sound-kuikly/src/androidMain/kotlin/io/github/gycrosskit/sound/kuikly/===
+AndroidSoundModule.kt[IH8T]: F:在Main按Renderer创建原生播放器handler并在销毁时关闭排队资格 | R:code:sound-kuikly/src/commonMain/kotlin/io/github/gycrosskit/sound/kuikly/SoundHandler.kt | A:AndroidSoundModule,registerGycSoundModule | S:宿主提供非零raw ID和可选AudioAttributes；factory不共享播放器，destroyed立即生效，Main异步清理context和handler
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/sound-kuikly/src/androidUnitTest/kotlin/io/github/gycrosskit/sound/kuikly/===
+AndroidSoundModuleTest.kt[TH6T]: F:用真实SDK导出factory验证新实例和销毁后排队调用隔离 | R:code:sound-kuikly/src/androidMain/kotlin/io/github/gycrosskit/sound/kuikly/AndroidSoundModule.kt | A:AndroidSoundModuleTest | S:Robolectric下SDK接口，设备声音独立验收
+SoundHandlerTest.kt[TH6T]: F:验证handler输入校验、准备常驻回执、替换及跨Renderer owner独立 | R:code:sound-kuikly/src/commonMain/kotlin/io/github/gycrosskit/sound/kuikly/SoundHandler.kt | A:SoundHandlerTest | S:受控播放器，不输出真实音频
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/sound-kuikly/src/commonMain/kotlin/io/github/gycrosskit/sound/kuikly/===
+SoundHandler.kt[IH8T]: F:在Main为当前Renderer校验音效协议、创建播放器并转发持续准备状态 | R:code:sound-core/src/commonMain/kotlin/io/github/gycrosskit/sound/SoundPlayer.kt | A:call,dispose | S:常驻callback支持READY后FAILED，替换prepare只保留最新回执；dispose永久关闭并取消收集与释放player，不管理宿主全局音频会话
+SoundModule.kt[IH8T]: F:在页面线程维护单一SoundState并桥接prepare/play/release及回执generation | R:code:sound-core/src/commonMain/kotlin/io/github/gycrosskit/sound/SoundPlayer.kt | A:SoundModule,NAME=GycSound | S:换址和release移除常驻callback并递增generation；RELEASED仅确认桥已关闭，原生资源异步释放，rawfile由宿主提供且不能为空
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/sound-kuikly/src/iosMain/kotlin/io/github/gycrosskit/sound/kuikly/===
+IosSoundModuleHandler.kt[IH7T]: F:从宿主Shared framework导出Bundle短音效handler供Pod receiver调用 | R:code:sound-kuikly/src/commonMain/kotlin/io/github/gycrosskit/sound/kuikly/SoundHandler.kt,code:sound-core/src/iosMain/kotlin/io/github/gycrosskit/sound/IosSoundPlayer.kt | A:IosSoundModuleHandler.call,dispose | S:rawfile必须是无目录且含有效扩展名的Bundle文件名，沿用宿主runtime
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/tests/===
+test_jitpack_install.py[TQ6T]: F:离线执行真实安装校验段验证来源、摘要与归档安全拒绝 | R:code:jitpack-install.sh | A:JitPackInstallTest | S:无SDK或联网，坏数据应在解包前失败
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/verification-consumer/===
+build.gradle.kts[FV6T]: F:创建独立多平台Maven消费者并导出SoundConsumer Simulator framework | R:code:verification-consumer/settings.gradle.kts | A:soundVersion,kuiklyRenderFrameworkDir | S:历史0.1.1至0.1.5只消费当时接线，当前版本导出Kuikly并链接真实Renderer
+gradle.properties[FV3T]: F:配置独立消费者Gradle堆、单worker和AndroidX | R:- | A:- | S:-
+settings.gradle.kts[FV5T]: F:限定sound坐标仓库并配置厂商工具链及Kuikly依赖源 | R:code:verification-consumer/build.gradle.kts | A:soundMavenRepo | S:默认公网JitPack，可显式指定本地staging且验证范围分别记录
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/verification-consumer/src/androidMain/kotlin/sound/consumer/===
+AndroidConsumer.kt[TH4T]: F:编译验证Android播放器接受宿主raw资源构造 | R:code:sound-core/src/androidMain/kotlin/io/github/gycrosskit/sound/AndroidSoundPlayer.kt | A:androidSound | S:-
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/verification-consumer/src/commonMain/kotlin/sound/consumer/===
+CommonConsumer.kt[TH4T]: F:编译验证公共SoundPlayer状态与未释放准备入口 | R:code:sound-core/src/commonMain/kotlin/io/github/gycrosskit/sound/SoundPlayer.kt | A:prepareSound | S:-
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/verification-consumer/src/iosMain/kotlin/sound/consumer/===
+IosConsumer.kt[TH4T]: F:编译验证iOS播放器Bundle资源构造 | R:code:sound-core/src/iosMain/kotlin/io/github/gycrosskit/sound/IosSoundPlayer.kt | A:iosSound | S:-
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/verification-consumer/src/kuiklyNativeAndroidMain/kotlin/===
+AndroidNativeModuleProbe.kt[TH4T]: F:编译验证Android真实Renderer音效注册扩展 | R:code:sound-kuikly/src/androidMain/kotlin/io/github/gycrosskit/sound/kuikly/AndroidSoundModule.kt | A:registerSoundNative | S:-
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/verification-consumer/src/kuiklyNativeIosMain/kotlin/===
+IosNativeModuleProbe.kt[TH4T]: F:编译验证iOS原生handler导出与构造 | R:code:sound-kuikly/src/iosMain/kotlin/io/github/gycrosskit/sound/kuikly/IosSoundModuleHandler.kt | A:soundNativeHandler | S:-
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/verification-consumer/src/kuiklyNativeMain/kotlin/===
+NativeModuleProbe.kt[TH4T]: F:编译验证跨端SoundModule接受宿主rawfile构造 | R:code:sound-kuikly/src/commonMain/kotlin/io/github/gycrosskit/sound/kuikly/SoundModule.kt | A:soundPageModule | S:-
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/verification-consumer/src/ohosArm64Main/kotlin/sound/consumer/===
+OhosConsumer.kt[TH4T]: F:编译验证OHOS的SoundModule实现SoundPlayer公共接口 | R:code:sound-kuikly/src/commonMain/kotlin/io/github/gycrosskit/sound/kuikly/SoundModule.kt | A:harmonySound | S:-
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/verification-har/AppScope/===
+app.json5[FV3T]: F:声明独立HAR消费者工程应用身份 | R:- | A:- | S:-
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/verification-har/===
+build-profile.json5[FV4T]: F:绑定SoundConsumerNative模块与target26/compatible22产品 | R:code:verification-har/consumer/build-profile.json5 | A:default产品 | S:-
+hvigorfile.ts[FV3T]: F:注册独立HAR消费者根appTasks | R:- | A:- | S:-
+oh-package.json5[FV3T]: F:声明独立本地HAR消费工程依赖容器 | R:- | A:- | S:-
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/verification-har/consumer/===
+Index.ets[TH4T]: F:导出独立消费者公开sound和Kuikly Module探针 | R:code:verification-har/consumer/src/main/ets/ConsumeSound.ets | A:createSound,createKuiklyModule,moduleName | S:-
+build-profile.json5[FV3T]: F:配置独立HAR消费者Stage模式目标 | R:- | A:default目标 | S:-
+hvigorfile.ts[FV3T]: F:注册独立消费者HAR构建任务 | R:- | A:- | S:-
+oh-package.json5[FV5T]: F:将消费者依赖绑定当前已打包SoundNative HAR文件 | R:code:ohos/sound-native/oh-package.json5 | A:@gycrosskit/sound-consumer | S:file依赖只验证本地产物消费，不证明Registry可安装
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/verification-har/consumer/src/main/ets/===
+ConsumeSound.ets[TH5T]: F:编译验证HAR播放器资源接线与prepare/play/release及Module公开导出 | R:code:ohos/sound-native/Index.ets | A:createSound,createKuiklyModule,moduleName | S:只编译，不执行音频播放
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/verification-har/consumer/src/main/===
+module.json5[FV3T]: F:声明SoundConsumerNative HAR模块与设备类型 | R:- | A:SoundConsumerNative | S:-
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/verification-har/hvigor/===
+hvigor-config.json5[FV3T]: F:固定独立HAR消费者Hvigor26模型配置 | R:- | A:- | S:-
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/verification/===
+KuiklyAssembly.swift[TQ6T]: F:用真实SoundConsumer导出类型为Pod receiver装配handler方法引用 | R:code:ios/Sources/GYCSoundKuikly/GycSoundModule.swift,code:sound-kuikly/src/iosMain/kotlin/io/github/gycrosskit/sound/kuikly/IosSoundModuleHandler.kt | A:registerSoundModuleFromShared | S:MainActor调用，宿主仅装配既有Shared framework，不重写transport
+KuiklyLifecycle.swift[TQ7S]: F:通过真实SDK验证音效receiver失效、脱离root、Main排队与dealloc清理 | R:code:ios/Sources/GYCSoundKuikly/GycSoundModule.swift | A:Scene启动的生命周期检查App | S:受控handler无播放业务；Main/Context及后台dealloc只释放原owner且不retain self，须打印KUIKLY_MODULE_LIFECYCLE_PASS
+SwiftConsumer.swift[TH5T]: F:类型检查发布framework中iOS构造与SoundPlayer协议调用 | R:code:sound-core/src/iosMain/kotlin/io/github/gycrosskit/sound/IosSoundPlayer.kt | A:soundFromPublishedFramework | S:仅编译，无运行时播放或网络验收
+ohos-behavior.cjs[TH7S]: F:转译真实ArkTS播放器和Module验证URL准入、重播seek、资源释放及旧回执隔离 | R:code:ohos/sound-native/src/main/ets/SoundPlayer.ets,code:ohos/sound-native/src/main/ets/SoundModule.ets | A:Node行为检查入口 | S:系统播放器、timer与资源为受控替身，测试确认rawfile关闭和异步创建后释放，不证明设备音频输出
+
+===/Users/guoyang/.codex/worktrees/aoci-sound/sound/verification/ci/===
+test_cache_contract.py[TQ3T]: F:静态检查编译缓存开关与行为测试禁复用策略 | R:code:scripts/ci-repositories.gradle | A:Python断言入口 | S:文本检查不证明真实任务执行
